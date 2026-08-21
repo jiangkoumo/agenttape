@@ -1,7 +1,7 @@
 # AgentTape 项目交接
 
 更新时间：2026-08-21
-当前阶段：0.3.0 开源 Codex 插件发布候选
+当前阶段：0.3.1 开源 Codex 插件已发布
 
 ## 正式产品
 
@@ -35,10 +35,18 @@ git diff --check
 - 不要把真实 `.agent-tape/runtime/` 或未经人工检查的 capture 提交到公共仓库。
 - 回归写操作只允许 `tests/agenttape/` 且默认不覆盖。
 
-## 发布接力
+## 已完成发布
 
-1. 恢复 GitHub CLI 的 `jiangkoumo` 账户认证。
-2. 创建公开仓库 `jiangkoumo/agenttape` 并推送 `main`。
-3. 等待 GitHub Actions 通过。
-4. 创建 `v0.3.0` 标签和 GitHub Release。
-5. 从 `jiangkoumo/agenttape` 添加 marketplace，安装 `agenttape@agenttape`，在新 Codex 任务中调用工具。
+- 公共仓库：`https://github.com/jiangkoumo/agenttape`
+- 当前正式版：`v0.3.1`
+- 安装源：`codex plugin marketplace add jiangkoumo/agenttape`
+- 插件安装：`codex plugin add agenttape@agenttape`
+- 公共 CI、GitHub Release、隔离安装和真实 Codex MCP 调用均已通过。
+
+`v0.3.0` 因未将预构建 MCP bundle 纳入 Git 而被 `v0.3.1` 取代。发布 CI 现在会同时检查 bundle 已被 Git 跟踪且重新构建后无差异。
+
+## 后续方向
+
+1. 收集真实 Codex 项目的 capture 与回归测试反馈。
+2. 扩展受支持的 Hook 事件和结构化 replay 断言，同时保持 tape v1 向后兼容。
+3. Branch Canvas、Sites 和远程 HTTP MCP 仅在有明确需求时继续，不作为本地插件安装依赖。
