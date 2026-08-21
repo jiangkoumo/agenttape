@@ -4,7 +4,7 @@ Thanks for helping improve AgentTape. Bug reports, focused feature proposals, do
 
 ## Development setup
 
-AgentTape requires Node.js 20 or newer.
+The AgentTape plugin requires Node.js 20 or newer. Building the optional remote HTTP MCP surface requires Node.js 22 or newer because of its Wrangler toolchain.
 
 ```bash
 git clone https://github.com/jiangkoumo/agenttape.git
