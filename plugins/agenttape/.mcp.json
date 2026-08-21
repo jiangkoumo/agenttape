@@ -1,10 +1,12 @@
 {
-  "agenttape": {
-    "title": "AgentTape",
-    "description": "Inspect, fork, and save workspace-local AgentTape captures.",
-    "cwd": ".",
-    "command": "node",
-    "args": ["./dist/mcp-server.mjs"],
-    "env_vars": ["CODEX_CWD", "PWD"]
+  "mcpServers": {
+    "agenttape": {
+      "title": "AgentTape",
+      "description": "Inspect, fork, and save workspace-local AgentTape captures.",
+      "cwd": ".",
+      "command": "node",
+      "args": ["./dist/mcp-server.mjs"],
+      "env_vars": ["CODEX_CWD", "PWD"]
+    }
   }
 }

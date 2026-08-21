@@ -174,8 +174,8 @@ test("packages the MCP server in the plugin manifest", async () => {
   const manifest = JSON.parse(await readFile(path.join(pluginRoot, ".codex-plugin", "plugin.json"), "utf8"));
   const config = JSON.parse(await readFile(path.join(pluginRoot, ".mcp.json"), "utf8"));
   assert.equal(manifest.mcpServers, "./.mcp.json");
-  assert.equal(config.agenttape.cwd, ".");
-  assert.deepEqual(config.agenttape.args, ["./dist/mcp-server.mjs"]);
-  assert.deepEqual(config.agenttape.env_vars, ["CODEX_CWD", "PWD"]);
+  assert.equal(config.mcpServers.agenttape.cwd, ".");
+  assert.deepEqual(config.mcpServers.agenttape.args, ["./dist/mcp-server.mjs"]);
+  assert.deepEqual(config.mcpServers.agenttape.env_vars, ["CODEX_CWD", "PWD"]);
   assert.ok((await readFile(bundledServer, "utf8")).startsWith("#!/usr/bin/env node\n"));
 });
