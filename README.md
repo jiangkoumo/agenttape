@@ -15,6 +15,10 @@ It records supported Codex hook events, exposes workspace captures through four 
 
 AgentTape does not claim bit-exact replay. Hosted tools, uncaptured external state, and downstream model reasoning remain outside structural replay coverage.
 
+## Hosted demo
+
+The redacted, read-only Branch Canvas is deployed at [agenttape.jiangkoumo.chatgpt.site](https://agenttape.jiangkoumo.chatgpt.site). The first release is owner-only; it never reads or writes a visitor's local workspace.
+
 ## Install locally
 
 Build and register the repository marketplace:

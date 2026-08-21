@@ -1,12 +1,12 @@
 # AgentTape 开发状态
 
 更新时间：2026-08-21
-版本状态：0.2.3 / local release candidate
-当前里程碑：Phase 2 功能闭环完成，进入发布验收
+版本状态：0.2.3 / owner-only hosted release
+当前里程碑：Phase 2 功能闭环与首个 Sites 发布完成
 
 ## 一句话状态
 
-AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”的离线闭环；本地 Codex 插件和真实 Branch Canvas 均已通过端到端验证，剩余工作是发布托管与外部目录提交。
+AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”的离线闭环；本地 Codex 插件、真实 Branch Canvas 和 owner-only Sites 发布均已完成。公开访问和 Universal Plugins Directory 提交仍是独立的授权/平台阶段。
 
 ## 当前能力
 
@@ -21,7 +21,7 @@ AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化�
 | Local plugin install | 完成 | `agenttape@personal` 0.2.3 已安装并由全新 Codex 进程实际调用 |
 | Offline public demo | 完成 | 构建时由核心 replay 引擎生成；公开模式只读，不访问访客本地文件 |
 | CI / security / privacy | 完成 | GitHub Actions、SECURITY、privacy notes |
-| Sites production deployment | 进行中 | 构建合约已通过，待保存版本和部署 |
+| Sites production deployment | 完成 | v1 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
 | Universal plugin submission | 待外部步骤 | 需要稳定 HTTPS MCP endpoint、开发者资料和提交门户权限 |
 
 ## 关键验证证据
@@ -31,6 +31,7 @@ AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化�
 - 保存后的回归由 CLI 执行：`PASS tape_regression_9f680719a4a7 4/4 assertions`。
 - Codex 0.2.3 实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
+- Sites 保存的版本与已推送源码 SHA 和本地打包产物一致；部署状态为 `succeeded`。
 
 ## 当前架构
 
@@ -58,6 +59,10 @@ redacted fixture → build-agenttape-demo.mjs → public read-only Demo mode
 ## 发布门槛
 
 1. 全量离线测试与 production build 通过。
-2. 1440 × 1024 本地和公开 Demo 主流程无 console error。
-3. Sites 版本保存并部署成功。
+2. 1440 × 1024 和 1024 × 768 的本地静态 Demo 主流程通过浏览器验收。
+3. Sites 版本保存并部署成功；当前访问策略为 owner-only。
 4. 若要进入 universal directory，部署独立远程 MCP、补齐公开 URL/隐私条款并通过官方提交审核。
+
+## 远程验收说明
+
+托管端已确认部署成功并设置 current live URL。当前自动化浏览器访问 `chatgpt.site` 时被 Cloudflare 边缘安全策略拦截，未到达应用页面，因此不能把这次自动化请求作为远程 UI 冒烟通过的证据；本地使用完全相同的 `dist/client` 静态产物已通过浏览器验收。

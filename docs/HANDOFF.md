@@ -2,7 +2,7 @@
 
 更新时间：2026-08-21
 权威工作区：`/Users/jiangkoumo/Documents/ChatGPT/#`
-当前阶段：0.2.3 local release candidate，Phase 2 闭环完成
+当前阶段：0.2.3 owner-only hosted release，Phase 2 闭环完成
 
 ## 当前可用成果
 
@@ -14,6 +14,7 @@
 - Branch Canvas 已接入真实 workspace tape；公开 build 会进入生成的只读 Demo 模式。
 - AgentTape 0.2.3 已通过本地 marketplace 安装和全新 Codex 进程工具调用。
 - Sites 构建输出位于 `dist/client/`、`dist/server/` 和 `dist/.openai/`。
+- Owner-only Sites 版本已部署到 `https://agenttape.jiangkoumo.chatgpt.site`。
 
 ## 验证命令
 
@@ -32,10 +33,10 @@ npm run build
 - 不要把真实 `.agent-tape/runtime/` 或未经人工检查的 capture 提交到仓库。
 - 公共 Demo 不连接访客本地文件；本地写操作只允许 `tests/agenttape/` 且默认不覆盖。
 
-## 发布接力
+## 后续发布接力
 
-1. 使用当前成功 build 保存并部署 Sites 版本。
-2. 保留 repo marketplace 作为 Codex 本地分发方式。
+1. 保留 repo marketplace 作为 Codex 本地分发方式。
+2. 只有在用户明确批准后，才把当前 owner-only Sites 访问策略改为 public 或其他共享范围。
 3. Universal public submission 是独立 Phase 3：需要稳定 HTTPS Streamable MCP endpoint、公开开发者/隐私/条款 URL 和提交门户审核。不要把 bundled stdio 安装描述为 universal plugin 发布。
 
 ## 不要修改
