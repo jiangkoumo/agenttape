@@ -1,14 +1,15 @@
-name: AgentTape
+name: AgentTape Release
 
 on:
   push:
-  pull_request:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  plugin-release:
+  release:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -21,16 +22,7 @@ jobs:
       - run: npm run test:plugin-release
       - run: npm run build:plugin
       - run: git diff --exit-code -- plugins/agenttape/dist/mcp-server.mjs
-
-  optional-surfaces:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --verify-tag --title "AgentTape ${GITHUB_REF_NAME#v}" --generate-notes

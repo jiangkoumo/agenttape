@@ -3,8 +3,11 @@
   "version": "0.3.0",
   "description": "Capture Codex tool traces and turn failures as portable .tape evidence.",
   "author": {
-    "name": "AgentTape"
+    "name": "jiangkoumo",
+    "url": "https://github.com/jiangkoumo"
   },
+  "homepage": "https://github.com/jiangkoumo/agenttape#readme",
+  "repository": "https://github.com/jiangkoumo/agenttape",
   "license": "MIT",
   "keywords": ["codex", "debugging", "replay", "regression-testing"],
   "skills": "./skills/",
@@ -13,7 +16,7 @@
     "displayName": "AgentTape",
     "shortDescription": "Turn Codex failures into portable evidence.",
     "longDescription": "Records supported Codex tool events locally, identifies explicit tool failures, and exposes versioned .tape evidence through MCP tools for inspection, structural forks, and regression saving.",
-    "developerName": "AgentTape",
+    "developerName": "jiangkoumo",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
     "defaultPrompt": [

@@ -1,7 +1,7 @@
 {
-  "name": "personal",
+  "name": "agenttape",
   "interface": {
-    "displayName": "Personal"
+    "displayName": "AgentTape"
   },
   "plugins": [
     {

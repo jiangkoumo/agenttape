@@ -1,74 +1,75 @@
 # AgentTape
 
-AgentTape is a local-first Codex plugin for turning captured tool failures into redacted, versioned `.tape` evidence and executable offline regression tests.
+AgentTape is an open-source, local-first Codex plugin for turning captured tool failures into redacted, versioned `.tape` evidence and executable offline regression tests.
 
-It records supported Codex hook events, exposes workspace captures through four MCP tools, creates deterministic structural forks without model or live-tool calls, and lets the Branch Canvas save a validated branch under `tests/agenttape/`.
+The Codex plugin under `plugins/agenttape/` is the product. It works locally through Codex hooks, a bundled stdio MCP server, and a capture skill. No website, Cloudflare account, or hosted service is required.
 
-## What works
+## Install from GitHub
 
-- Redacted version 1 `.tape` capture and JSON Schema validation.
-- `list_tapes`, `inspect_tape`, `fork_run`, and `save_regression` MCP tools.
-- Structural result substitution for permission denied, timeout, malformed JSON, and truncated response conditions.
-- Offline assertions with meaningful CLI exit codes.
-- A real local Branch Canvas plus a generated, read-only public demo mode.
-- Repository-local Codex marketplace packaging.
-- A separately deployable Streamable HTTP MCP server for stateless processing of caller-supplied redacted tapes.
-
-AgentTape does not claim bit-exact replay. Hosted tools, uncaptured external state, and downstream model reasoning remain outside structural replay coverage.
-
-## Hosted demo
-
-The redacted, read-only Branch Canvas is deployed at [agenttape.jiangkoumo.chatgpt.site](https://agenttape.jiangkoumo.chatgpt.site). The first release is owner-only; it never reads or writes a visitor's local workspace.
-
-## Remote MCP release candidate
-
-The Cloudflare Worker under `remote/` exposes `validate_tape`, `inspect_tape`, `fork_run`, and `run_assertions` at `/mcp`. It accepts only explicit AgentTape v1 documents with `redactions.applied: true`, limits requests and tapes to roughly 1 MiB, stores nothing, and performs no model or live-tool calls.
+Prerequisites: Codex and Node.js 20 or newer.
 
 ```bash
-npm run test:http-mcp
-npm run build:http-mcp
+codex plugin marketplace add jiangkoumo/agenttape
+codex plugin add agenttape@agenttape
 ```
 
-Production deployment requires an authenticated Cloudflare account. See [Remote MCP architecture](./docs/REMOTE_MCP.md) and the [plugin submission packet](./docs/PLUGIN_SUBMISSION.md).
+Start a new Codex task after installation, review and trust the bundled hooks, then ask Codex to list or inspect AgentTape captures. Runtime data stays in the active project under `.agent-tape/`.
 
-## Install locally
-
-Build and register the repository marketplace:
+To remove it:
 
 ```bash
+codex plugin remove agenttape@agenttape
+codex plugin marketplace remove agenttape
+```
+
+## What it does
+
+- Records supported Codex lifecycle, permission, and tool events.
+- Recursively redacts common secret-bearing fields before exporting tape v1.
+- Marks explicit tool failures and calculates replay confidence.
+- Provides `list_tapes`, `inspect_tape`, `fork_run`, and `save_regression` MCP tools.
+- Structurally substitutes recorded permission-denied, timeout, malformed-JSON, and truncated-response results.
+- Runs offline assertions with meaningful CLI exit codes.
+- Saves reviewed regression artifacts under `tests/agenttape/` without overwriting by default.
+
+AgentTape does not claim bit-exact or complete replay. Hosted tools, uncaptured external state, and downstream model reasoning remain outside local hook coverage.
+
+## Local development
+
+```bash
+git clone https://github.com/jiangkoumo/agenttape.git
+cd agenttape
 npm ci
-npm run build
+npm run test:plugin-release
+npm run build:plugin
 codex plugin marketplace add .
-codex plugin add agenttape@personal
+codex plugin add agenttape@agenttape
 ```
 
-Start a new Codex task in this repository after reviewing and trusting the bundled hooks. Captures are written under `.agent-tape/`, which is ignored by Git.
+The committed `plugins/agenttape/dist/mcp-server.mjs` lets normal marketplace installs run without a repository build. Contributors should rebuild and commit it when MCP source changes.
 
-## Try the offline demo
+Run `npm test` and `npm run build` only when changing the optional Branch Canvas, Sites adapter, or remote HTTP MCP surfaces.
 
-```bash
-npm run demo
-```
-
-The demo seeds a redacted fixture only when no file with the same name exists. The local UI then exercises the same list, inspect, fork, and save logic used by the MCP server.
-
-## Run a regression
+## Run a regression directly
 
 ```bash
 node plugins/agenttape/scripts/agenttape.mjs test \
   tests/agenttape/fixture_permission_denied-timeout.tape
 ```
 
-Passing assertions exit with code `0`; validation or assertion failures exit non-zero and redact compared values.
+Passing assertions exit with code `0`; validation or assertion failures exit nonzero and omit captured comparison values.
 
-## Verify the release
+## Optional development surfaces
 
-```bash
-npm test
-npm run build
-```
+The repository also contains a Branch Canvas prototype under `src/` and an experimental stateless HTTP MCP implementation under `remote/`. They exercise the same tape and replay core but are not required to install or use the Codex plugin and are not part of the open-source release gate.
 
-See [Phase 2 status](./docs/DEVELOPMENT_STATUS.md), the [version 1 tape contract](./docs/TAPE_SCHEMA_V1.md), [security policy](./SECURITY.md), and [privacy notes](./docs/PRIVACY.md).
+## Security and privacy
+
+Review every `.tape` before sharing it. The redaction marker proves that AgentTape's redactor ran; it cannot prove arbitrary free-form text contains no sensitive information. See [SECURITY.md](./SECURITY.md) and [docs/PRIVACY.md](./docs/PRIVACY.md).
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md), [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md), and [CHANGELOG.md](./CHANGELOG.md).
 
 ## License
 
