@@ -18,7 +18,7 @@ AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结�
 | Structural replay | 完成 | 4 种 recorded-result injection，0 model calls / 0 live tools |
 | Assertions / CLI | 完成 | 6 类断言；通过为 0，失败为非零且 diff 脱敏 |
 | Branch Canvas | 完成 | 真实 list/inspect/fork/save；加载、空、错误和 Demo 状态 |
-| Local plugin install | 完成 | `agenttape@personal` 0.2.3 已安装并由全新 Codex 进程实际调用 |
+| Local plugin install | 完成 | `agenttape@personal` 0.3.0 已安装并由全新只读 Codex 进程实际调用 |
 | Offline public demo | 完成 | 构建时由核心 replay 引擎生成；公开模式只读，不访问访客本地文件 |
 | CI / security / privacy | 完成 | GitHub Actions、SECURITY、privacy notes |
 | Sites production deployment | 完成 | 0.3.0 v3 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
@@ -30,7 +30,7 @@ AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结�
 - UI 从 `.agent-tape/tapes/permission-denied.tape` 加载 `github.create_issue` 失败。
 - 浏览器把注入条件切换为 timeout，并保存 `tests/agenttape/fixture_permission_denied-timeout.tape`。
 - 保存后的回归由 CLI 执行：`PASS tape_regression_9f680719a4a7 4/4 assertions`。
-- Codex 0.2.3 实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
+- Codex 0.3.0 实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
 - Sites v3 保存版本与已推送源码 `efb7878e35f1f0e02fcb70342d30539838e515d9` 和本地打包产物一致；生产部署状态为 `succeeded`。
 - HTTP MCP 列出并调用 `validate_tape`、`inspect_tape`、`fork_run`、`run_assertions`；未脱敏、超大和跨域输入均被拒绝。

@@ -12,7 +12,7 @@
 - Bundled stdio MCP：`list_tapes`、`inspect_tape`、`fork_run`、`save_regression`。
 - Structural replay、4 种 injection、assertion runner 和 CLI exit semantics。
 - Branch Canvas 已接入真实 workspace tape；公开 build 会进入生成的只读 Demo 模式。
-- AgentTape 0.2.3 已通过本地 marketplace 安装和全新 Codex 进程工具调用。
+- AgentTape 0.3.0 已通过本地 marketplace 安装和全新只读 Codex 进程工具调用。
 - Sites 构建输出位于 `dist/client/`、`dist/server/` 和 `dist/.openai/`。
 - 0.3.0 owner-only Sites v3 已部署到 `https://agenttape.jiangkoumo.chatgpt.site`。
 - `remote/worker.mjs` 提供无状态 Streamable HTTP MCP；MCP v2 客户端、Wrangler dry-run 和本地 runtime 全工具验收已通过。
