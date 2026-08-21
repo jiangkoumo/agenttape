@@ -11,6 +11,8 @@ async function readJson(path) {
 test("publishes a Git-installable AgentTape marketplace", async () => {
   const marketplace = await readJson(".agents/plugins/marketplace.json");
   const manifest = await readJson("plugins/agenttape/.codex-plugin/plugin.json");
+  const packageMetadata = await readJson("package.json");
+  const bundledServer = await readFile(new URL("plugins/agenttape/dist/mcp-server.mjs", root), "utf8");
   const readme = await readFile(new URL("README.md", root), "utf8");
 
   assert.equal(marketplace.name, "agenttape");
@@ -22,6 +24,8 @@ test("publishes a Git-installable AgentTape marketplace", async () => {
   assert.equal(manifest.name, "agenttape");
   assert.equal(manifest.repository, "https://github.com/jiangkoumo/agenttape");
   assert.equal(manifest.homepage, "https://github.com/jiangkoumo/agenttape#readme");
+  assert.equal(manifest.version, packageMetadata.version);
+  assert.match(bundledServer, /createAgentTapeServer/);
   assert.match(readme, /codex plugin marketplace add jiangkoumo\/agenttape/);
   assert.match(readme, /codex plugin add agenttape@agenttape/);
   assert.doesNotMatch(readme, /agenttape@personal/);

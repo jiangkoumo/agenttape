@@ -1,6 +1,6 @@
 # AgentTape for Codex
 
-AgentTape 0.3.0 is an open-source, local-first Codex plugin that records supported lifecycle and tool events, marks explicit tool failures, emits a redacted version 1 `.tape`, and turns deterministic structural branches into executable regressions. It does not require a hosted service.
+AgentTape 0.3.1 is an open-source, local-first Codex plugin that records supported lifecycle and tool events, marks explicit tool failures, emits a redacted version 1 `.tape`, and turns deterministic structural branches into executable regressions. It does not require a hosted service.
 
 Install it from the repository marketplace with `codex plugin marketplace add jiangkoumo/agenttape`, followed by `codex plugin add agenttape@agenttape`.
 

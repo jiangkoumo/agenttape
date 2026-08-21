@@ -20,6 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:plugin-release
+      - run: git ls-files --error-unmatch plugins/agenttape/dist/mcp-server.mjs
       - run: npm run build:plugin
       - run: git diff --exit-code -- plugins/agenttape/dist/mcp-server.mjs
       - name: Create GitHub Release

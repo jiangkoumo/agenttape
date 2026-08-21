@@ -4,5 +4,7 @@
 .wrangler/
 node_modules/
 dist/
+!plugins/agenttape/dist/
+!plugins/agenttape/dist/mcp-server.mjs
 .DS_Store
 *.log

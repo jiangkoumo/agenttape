@@ -2,6 +2,10 @@
 
 All notable AgentTape changes are documented here.
 
+## 0.3.1 - 2026-08-21
+
+- Include the prebuilt MCP server in Git marketplace installs so AgentTape runs without repository dependencies or a local build.
+
 ## 0.3.0 - 2026-08-21
 
 - Publish AgentTape as an installable repository marketplace for Codex.
