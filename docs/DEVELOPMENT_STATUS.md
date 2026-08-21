@@ -6,7 +6,7 @@
 
 ## 一句话状态
 
-AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”闭环和 owner-only Sites 发布。0.3.0 进一步提供无状态 Streamable HTTP MCP，真实 MCP v2 客户端测试和 Cloudflare Worker dry-run 均已通过；生产 Worker 部署仍需要 Cloudflare 登录授权。
+AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”闭环和 owner-only Sites 发布。0.3.0 进一步提供无状态 Streamable HTTP MCP，真实 MCP v2 客户端测试、Cloudflare Worker dry-run 和 Wrangler 本地 runtime 全工具验收均已通过；生产 Worker 部署仍需要 Cloudflare 登录授权。
 
 ## 当前能力
 
@@ -21,8 +21,8 @@ AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结�
 | Local plugin install | 完成 | `agenttape@personal` 0.2.3 已安装并由全新 Codex 进程实际调用 |
 | Offline public demo | 完成 | 构建时由核心 replay 引擎生成；公开模式只读，不访问访客本地文件 |
 | CI / security / privacy | 完成 | GitHub Actions、SECURITY、privacy notes |
-| Sites production deployment | 完成 | v2 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
-| Stateless HTTPS MCP | 发布候选完成 | 4 个只读工具，MCP v2 客户端端到端通过，Worker dry-run 通过 |
+| Sites production deployment | 完成 | 0.3.0 v3 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
+| Stateless HTTPS MCP | 发布候选完成 | 4 个只读工具，MCP v2 客户端、Worker dry-run 与 Wrangler runtime 端到端通过 |
 | Universal plugin submission | 待外部步骤 | 需要部署稳定 HTTPS MCP、Cloudflare/OpenAI 身份与提交门户权限 |
 
 ## 关键验证证据
@@ -32,8 +32,9 @@ AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结�
 - 保存后的回归由 CLI 执行：`PASS tape_regression_9f680719a4a7 4/4 assertions`。
 - Codex 0.2.3 实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
-- Sites 保存的版本与已推送源码 SHA 和本地打包产物一致；部署状态为 `succeeded`。
+- Sites v3 保存版本与已推送源码 `efb7878e35f1f0e02fcb70342d30539838e515d9` 和本地打包产物一致；生产部署状态为 `succeeded`。
 - HTTP MCP 列出并调用 `validate_tape`、`inspect_tape`、`fork_run`、`run_assertions`；未脱敏、超大和跨域输入均被拒绝。
+- `npm run verify:http-mcp -- http://127.0.0.1:8799` 已针对 Wrangler runtime 通过：4 个工具、4 条断言。
 
 ## 当前架构
 

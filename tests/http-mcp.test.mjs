@@ -5,6 +5,7 @@ import test from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
 import { handleAgentTapeRemoteRequest } from "../remote/worker.mjs";
+import { verifyRemoteMcp } from "../scripts/verify-remote-mcp.mjs";
 
 const fixture = JSON.parse(await readFile(new URL("../plugins/agenttape/fixtures/permission-denied.tape", import.meta.url), "utf8"));
 const regression = JSON.parse(await readFile(new URL("./agenttape/fixture_permission_denied-timeout.tape", import.meta.url), "utf8"));
@@ -102,4 +103,9 @@ test("publishes health and policy endpoints without storage or challenge leakage
 
   const challenge = await handleAgentTapeRemoteRequest(new Request("https://agenttape.test/.well-known/openai-apps-challenge"), testEnv);
   assert.equal(challenge.status, 404);
+});
+
+test("runs the production verification workflow against the Worker contract", async () => {
+  const result = await verifyRemoteMcp("https://agenttape.test", workerFetch);
+  assert.deepEqual(result, { origin: "https://agenttape.test", tools: 4, assertions: 4 });
 });

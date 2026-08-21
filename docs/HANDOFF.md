@@ -14,8 +14,8 @@
 - Branch Canvas 已接入真实 workspace tape；公开 build 会进入生成的只读 Demo 模式。
 - AgentTape 0.2.3 已通过本地 marketplace 安装和全新 Codex 进程工具调用。
 - Sites 构建输出位于 `dist/client/`、`dist/server/` 和 `dist/.openai/`。
-- Owner-only Sites 版本已部署到 `https://agenttape.jiangkoumo.chatgpt.site`。
-- `remote/worker.mjs` 提供无状态 Streamable HTTP MCP；本地 MCP v2 客户端和 Wrangler dry-run 已通过。
+- 0.3.0 owner-only Sites v3 已部署到 `https://agenttape.jiangkoumo.chatgpt.site`。
+- `remote/worker.mjs` 提供无状态 Streamable HTTP MCP；MCP v2 客户端、Wrangler dry-run 和本地 runtime 全工具验收已通过。
 
 ## 验证命令
 
@@ -37,7 +37,7 @@ npm run build
 ## 后续发布接力
 
 1. 保留 repo marketplace 作为 Codex 本地分发方式。
-2. 完成 Cloudflare 登录后部署 `agenttape-mcp-jiangkoumo`，再对生产 `/mcp` 做全工具回归。
+2. 完成 Cloudflare 登录后部署 `agenttape-mcp-jiangkoumo`，再运行 `npm run verify:http-mcp -- <production-origin>` 对生产 `/mcp` 做全工具回归。
 3. 只有在用户明确批准后，才把当前 owner-only Sites 访问策略改为 public 或其他共享范围。
 4. Universal public submission 还需要开发者身份、Apps Management 权限、域名验证和提交门户审核。不要把 bundled stdio 安装或 release candidate 描述为 universal plugin 发布。
 

@@ -43,6 +43,13 @@ The test suite connects with the official MCP v2 client over a custom fetch tran
 
 ## Deployment
 
-Authenticate first with `npx wrangler whoami`; if needed, complete `npx wrangler login`. Then deploy with `npm run deploy:http-mcp`. After deployment, rerun the same tool calls against the production `/mcp` URL and verify the health and policy routes.
+Authenticate first with `npx wrangler whoami`; if needed, complete `npx wrangler login`. Then deploy and run the production acceptance check:
+
+```bash
+npm run deploy:http-mcp
+npm run verify:http-mcp -- https://your-worker.example
+```
+
+The verifier checks `/health`, all three policy routes, MCP initialization and tool discovery, then calls all four tools with redacted fixtures. It exits nonzero on any failed production contract.
 
 Public plugin submission additionally requires domain verification, a registered MCP connection, verified publisher identity, Apps Management write access, public listing/support URLs, and portal review.
