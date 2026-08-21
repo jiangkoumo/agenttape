@@ -1,0 +1,604 @@
+{
+  "format": "agenttape.demo",
+  "version": 1,
+  "generatedAt": "2026-08-21T08:00:03.000Z",
+  "list": {
+    "tapes": [
+      {
+        "id": "tape_fixture_permission_denied",
+        "status": "failed",
+        "capturedAt": "2026-08-21T08:00:00.000Z",
+        "completedAt": "2026-08-21T08:00:03.000Z",
+        "eventCount": 4,
+        "toolCallCount": 1,
+        "failedToolCallCount": 1,
+        "firstFailure": {
+          "sequence": 3,
+          "toolName": "github.create_issue",
+          "kind": "permission_denied",
+          "reason": "The recorded tool result denied the operation."
+        },
+        "replayConfidence": {
+          "score": 0.65,
+          "level": "medium"
+        },
+        "redactionApplied": true
+      }
+    ],
+    "warnings": [],
+    "truncated": false
+  },
+  "inspection": {
+    "run": {
+      "id": "tape_fixture_permission_denied",
+      "status": "failed",
+      "capturedAt": "2026-08-21T08:00:00.000Z",
+      "completedAt": "2026-08-21T08:00:03.000Z",
+      "source": {
+        "adapter": "codex-hooks",
+        "sessionId": "fixture-permission-denied",
+        "turnId": "turn-1",
+        "coverage": "supported-local-hooks"
+      },
+      "summary": {
+        "eventCount": 4,
+        "toolCallCount": 1,
+        "failedToolCallCount": 1,
+        "firstFailureSequence": 3
+      },
+      "limitations": [
+        "Hosted tools outside the Codex local hook path are not captured.",
+        "This fixture supports structural replay, not bit-exact replay."
+      ],
+      "artifactCount": 0,
+      "assertionCount": 4,
+      "fork": {
+        "sourceTapeId": "tape_fixture_permission_denied_source",
+        "boundarySequence": 2,
+        "createdAt": "2026-08-21T08:05:00.000Z"
+      },
+      "injection": {
+        "kind": "permission_denied",
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution"
+      }
+    },
+    "events": [
+      {
+        "sequence": 1,
+        "recordedAt": "2026-08-21T08:00:00.000Z",
+        "type": "SessionStart",
+        "turnId": "turn-1"
+      },
+      {
+        "sequence": 2,
+        "recordedAt": "2026-08-21T08:00:01.000Z",
+        "type": "PreToolUse",
+        "turnId": "turn-1",
+        "tool": {
+          "name": "github.create_issue",
+          "useId": "tool-1",
+          "input": {
+            "repository": "example/project",
+            "authorization": "[REDACTED]"
+          }
+        }
+      },
+      {
+        "sequence": 3,
+        "recordedAt": "2026-08-21T08:00:02.000Z",
+        "type": "PostToolUse",
+        "turnId": "turn-1",
+        "tool": {
+          "name": "github.create_issue",
+          "useId": "tool-1",
+          "output": {
+            "status": "denied",
+            "message": "Permission denied"
+          },
+          "failed": true,
+          "failure": {
+            "kind": "permission_denied",
+            "reason": "The recorded tool result denied the operation."
+          }
+        }
+      },
+      {
+        "sequence": 4,
+        "recordedAt": "2026-08-21T08:00:03.000Z",
+        "type": "Stop",
+        "turnId": "turn-1"
+      }
+    ],
+    "failures": [
+      {
+        "sequence": 3,
+        "toolName": "github.create_issue",
+        "kind": "permission_denied",
+        "reason": "The recorded tool result denied the operation."
+      }
+    ],
+    "replayConfidence": {
+      "score": 0.65,
+      "level": "medium",
+      "inputs": {
+        "coverage": "supported-local-hooks",
+        "capturedToolResults": true,
+        "eventSequenceComplete": true,
+        "externalStateCaptured": false,
+        "redactionsPresent": true,
+        "unknownToolCount": 0,
+        "modelCallsBeforeFork": 0
+      },
+      "reasons": [
+        "Coverage is supported-local-hooks.",
+        "External state was not captured.",
+        "Redaction may hide replay-relevant values."
+      ]
+    },
+    "redaction": {
+      "applied": true,
+      "count": 1,
+      "strategy": "agenttape-v1",
+      "paths": [
+        "/events/1/tool/input/authorization"
+      ]
+    }
+  },
+  "forks": {
+    "permission_denied": {
+      "format": "agenttape.replay-result",
+      "version": 1,
+      "sourceTapeId": "tape_fixture_permission_denied",
+      "status": "completed",
+      "mode": "structural",
+      "branch": {
+        "format": "agenttape.branch",
+        "version": 1,
+        "id": "branch_32afe26db5c7",
+        "sourceTapeId": "tape_fixture_permission_denied",
+        "boundarySequence": 2,
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution",
+        "createdAt": "2026-08-21T08:00:03.000Z",
+        "injection": {
+          "kind": "permission_denied",
+          "targetSequence": 3,
+          "mode": "recorded-result-substitution"
+        }
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "recordedAt": "2026-08-21T08:00:00.000Z",
+          "type": "SessionStart",
+          "turnId": "turn-1"
+        },
+        {
+          "sequence": 2,
+          "recordedAt": "2026-08-21T08:00:01.000Z",
+          "type": "PreToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "input": {
+              "repository": "example/project",
+              "authorization": "[REDACTED]"
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "recordedAt": "2026-08-21T08:00:02.000Z",
+          "type": "PostToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "output": {
+              "status": "denied",
+              "errorCode": "PERMISSION_DENIED",
+              "error": {
+                "code": "PERMISSION_DENIED",
+                "message": "Permission denied"
+              }
+            },
+            "failed": true,
+            "failure": {
+              "kind": "permission_denied",
+              "reason": "Injected permission_denied through recorded-result substitution"
+            }
+          }
+        }
+      ],
+      "finalStatus": "failed",
+      "diff": {
+        "targetSequence": 3,
+        "path": "/events/2/tool/output",
+        "before": {
+          "status": "denied",
+          "message": "Permission denied"
+        },
+        "after": {
+          "status": "denied",
+          "errorCode": "PERMISSION_DENIED",
+          "error": {
+            "code": "PERMISSION_DENIED",
+            "message": "Permission denied"
+          }
+        },
+        "changed": true
+      },
+      "confidence": {
+        "score": 0.65,
+        "level": "medium",
+        "inputs": {
+          "coverage": "supported-local-hooks",
+          "capturedToolResults": true,
+          "eventSequenceComplete": true,
+          "externalStateCaptured": false,
+          "redactionsPresent": true,
+          "unknownToolCount": 0,
+          "modelCallsBeforeFork": 0
+        },
+        "reasons": [
+          "Coverage is supported-local-hooks.",
+          "External state was not captured.",
+          "Redaction may hide replay-relevant values."
+        ]
+      },
+      "evidence": {
+        "replayedEventCount": 2,
+        "modelCallsBeforeFork": 0,
+        "liveToolCalls": 0
+      },
+      "limitations": [
+        "Replay stops at the injected tool result and does not regenerate downstream agent reasoning.",
+        "Hosted tools and uncaptured external state remain outside structural replay coverage."
+      ]
+    },
+    "timeout": {
+      "format": "agenttape.replay-result",
+      "version": 1,
+      "sourceTapeId": "tape_fixture_permission_denied",
+      "status": "completed",
+      "mode": "structural",
+      "branch": {
+        "format": "agenttape.branch",
+        "version": 1,
+        "id": "branch_9f680719a4a7",
+        "sourceTapeId": "tape_fixture_permission_denied",
+        "boundarySequence": 2,
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution",
+        "createdAt": "2026-08-21T08:00:03.000Z",
+        "injection": {
+          "kind": "timeout",
+          "targetSequence": 3,
+          "mode": "recorded-result-substitution"
+        }
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "recordedAt": "2026-08-21T08:00:00.000Z",
+          "type": "SessionStart",
+          "turnId": "turn-1"
+        },
+        {
+          "sequence": 2,
+          "recordedAt": "2026-08-21T08:00:01.000Z",
+          "type": "PreToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "input": {
+              "repository": "example/project",
+              "authorization": "[REDACTED]"
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "recordedAt": "2026-08-21T08:00:02.000Z",
+          "type": "PostToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "output": {
+              "status": "failed",
+              "errorCode": "TIMEOUT",
+              "error": {
+                "code": "TIMEOUT",
+                "message": "Tool call timed out"
+              },
+              "timeoutMs": 30000
+            },
+            "failed": true,
+            "failure": {
+              "kind": "timeout",
+              "reason": "Injected timeout through recorded-result substitution"
+            }
+          }
+        }
+      ],
+      "finalStatus": "failed",
+      "diff": {
+        "targetSequence": 3,
+        "path": "/events/2/tool/output",
+        "before": {
+          "status": "denied",
+          "message": "Permission denied"
+        },
+        "after": {
+          "status": "failed",
+          "errorCode": "TIMEOUT",
+          "error": {
+            "code": "TIMEOUT",
+            "message": "Tool call timed out"
+          },
+          "timeoutMs": 30000
+        },
+        "changed": true
+      },
+      "confidence": {
+        "score": 0.65,
+        "level": "medium",
+        "inputs": {
+          "coverage": "supported-local-hooks",
+          "capturedToolResults": true,
+          "eventSequenceComplete": true,
+          "externalStateCaptured": false,
+          "redactionsPresent": true,
+          "unknownToolCount": 0,
+          "modelCallsBeforeFork": 0
+        },
+        "reasons": [
+          "Coverage is supported-local-hooks.",
+          "External state was not captured.",
+          "Redaction may hide replay-relevant values."
+        ]
+      },
+      "evidence": {
+        "replayedEventCount": 2,
+        "modelCallsBeforeFork": 0,
+        "liveToolCalls": 0
+      },
+      "limitations": [
+        "Replay stops at the injected tool result and does not regenerate downstream agent reasoning.",
+        "Hosted tools and uncaptured external state remain outside structural replay coverage."
+      ]
+    },
+    "malformed_json": {
+      "format": "agenttape.replay-result",
+      "version": 1,
+      "sourceTapeId": "tape_fixture_permission_denied",
+      "status": "completed",
+      "mode": "structural",
+      "branch": {
+        "format": "agenttape.branch",
+        "version": 1,
+        "id": "branch_5b46867dcc38",
+        "sourceTapeId": "tape_fixture_permission_denied",
+        "boundarySequence": 2,
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution",
+        "createdAt": "2026-08-21T08:00:03.000Z",
+        "injection": {
+          "kind": "malformed_json",
+          "targetSequence": 3,
+          "mode": "recorded-result-substitution"
+        }
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "recordedAt": "2026-08-21T08:00:00.000Z",
+          "type": "SessionStart",
+          "turnId": "turn-1"
+        },
+        {
+          "sequence": 2,
+          "recordedAt": "2026-08-21T08:00:01.000Z",
+          "type": "PreToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "input": {
+              "repository": "example/project",
+              "authorization": "[REDACTED]"
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "recordedAt": "2026-08-21T08:00:02.000Z",
+          "type": "PostToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "output": {
+              "status": "error",
+              "errorCode": "MALFORMED_JSON",
+              "error": {
+                "code": "MALFORMED_JSON",
+                "message": "Recorded response is not valid JSON"
+              }
+            },
+            "failed": true,
+            "failure": {
+              "kind": "malformed_json",
+              "reason": "Injected malformed_json through recorded-result substitution"
+            }
+          }
+        }
+      ],
+      "finalStatus": "failed",
+      "diff": {
+        "targetSequence": 3,
+        "path": "/events/2/tool/output",
+        "before": {
+          "status": "denied",
+          "message": "Permission denied"
+        },
+        "after": {
+          "status": "error",
+          "errorCode": "MALFORMED_JSON",
+          "error": {
+            "code": "MALFORMED_JSON",
+            "message": "Recorded response is not valid JSON"
+          }
+        },
+        "changed": true
+      },
+      "confidence": {
+        "score": 0.65,
+        "level": "medium",
+        "inputs": {
+          "coverage": "supported-local-hooks",
+          "capturedToolResults": true,
+          "eventSequenceComplete": true,
+          "externalStateCaptured": false,
+          "redactionsPresent": true,
+          "unknownToolCount": 0,
+          "modelCallsBeforeFork": 0
+        },
+        "reasons": [
+          "Coverage is supported-local-hooks.",
+          "External state was not captured.",
+          "Redaction may hide replay-relevant values."
+        ]
+      },
+      "evidence": {
+        "replayedEventCount": 2,
+        "modelCallsBeforeFork": 0,
+        "liveToolCalls": 0
+      },
+      "limitations": [
+        "Replay stops at the injected tool result and does not regenerate downstream agent reasoning.",
+        "Hosted tools and uncaptured external state remain outside structural replay coverage."
+      ]
+    },
+    "truncated_response": {
+      "format": "agenttape.replay-result",
+      "version": 1,
+      "sourceTapeId": "tape_fixture_permission_denied",
+      "status": "completed",
+      "mode": "structural",
+      "branch": {
+        "format": "agenttape.branch",
+        "version": 1,
+        "id": "branch_0c2b9b163701",
+        "sourceTapeId": "tape_fixture_permission_denied",
+        "boundarySequence": 2,
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution",
+        "createdAt": "2026-08-21T08:00:03.000Z",
+        "injection": {
+          "kind": "truncated_response",
+          "targetSequence": 3,
+          "mode": "recorded-result-substitution"
+        }
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "recordedAt": "2026-08-21T08:00:00.000Z",
+          "type": "SessionStart",
+          "turnId": "turn-1"
+        },
+        {
+          "sequence": 2,
+          "recordedAt": "2026-08-21T08:00:01.000Z",
+          "type": "PreToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "input": {
+              "repository": "example/project",
+              "authorization": "[REDACTED]"
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "recordedAt": "2026-08-21T08:00:02.000Z",
+          "type": "PostToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "output": {
+              "status": "failed",
+              "errorCode": "TRUNCATED_RESPONSE",
+              "error": {
+                "code": "TRUNCATED_RESPONSE",
+                "message": "Recorded response was truncated"
+              },
+              "truncated": true,
+              "maxBytes": 1024
+            },
+            "failed": true,
+            "failure": {
+              "kind": "truncated_response",
+              "reason": "Injected truncated_response through recorded-result substitution"
+            }
+          }
+        }
+      ],
+      "finalStatus": "failed",
+      "diff": {
+        "targetSequence": 3,
+        "path": "/events/2/tool/output",
+        "before": {
+          "status": "denied",
+          "message": "Permission denied"
+        },
+        "after": {
+          "status": "failed",
+          "errorCode": "TRUNCATED_RESPONSE",
+          "error": {
+            "code": "TRUNCATED_RESPONSE",
+            "message": "Recorded response was truncated"
+          },
+          "truncated": true,
+          "maxBytes": 1024
+        },
+        "changed": true
+      },
+      "confidence": {
+        "score": 0.65,
+        "level": "medium",
+        "inputs": {
+          "coverage": "supported-local-hooks",
+          "capturedToolResults": true,
+          "eventSequenceComplete": true,
+          "externalStateCaptured": false,
+          "redactionsPresent": true,
+          "unknownToolCount": 0,
+          "modelCallsBeforeFork": 0
+        },
+        "reasons": [
+          "Coverage is supported-local-hooks.",
+          "External state was not captured.",
+          "Redaction may hide replay-relevant values."
+        ]
+      },
+      "evidence": {
+        "replayedEventCount": 2,
+        "modelCallsBeforeFork": 0,
+        "liveToolCalls": 0
+      },
+      "limitations": [
+        "Replay stops at the injected tool result and does not regenerate downstream agent reasoning.",
+        "Hosted tools and uncaptured external state remain outside structural replay coverage."
+      ]
+    }
+  }
+}

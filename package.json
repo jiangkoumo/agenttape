@@ -1,0 +1,38 @@
+{
+  "name": "agenttape",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:plugin && npm run test:mcp && npm run test:api && npm run test:demo && npm run test:replay && npm run test:regression && npm run test:sites",
+    "dev": "node scripts/run-vite.mjs",
+    "build": "npm run build:mcp && npm run build:demo && node scripts/run-vite.mjs build && node scripts/prepare-sites-build.mjs",
+    "build:mcp": "node scripts/build-agenttape-mcp.mjs",
+    "build:demo": "node scripts/build-agenttape-demo.mjs",
+    "demo:seed": "node scripts/seed-agenttape-demo.mjs",
+    "demo": "npm run demo:seed && npm run dev",
+    "preview": "node scripts/run-vite.mjs preview",
+    "test:plugin": "node --test tests/plugin-recorder.test.mjs tests/tape-schema.test.mjs",
+    "test:mcp": "npm run build:mcp && node --test tests/mcp-server.test.mjs",
+    "test:api": "node --test tests/local-api.test.mjs",
+    "test:demo": "npm run build:demo && node --test tests/demo-data.test.mjs",
+    "test:replay": "node --test tests/structural-replay.test.mjs",
+    "test:regression": "node --test tests/assertion-runner.test.mjs",
+    "test:sites": "node --test tests/sites-worker.test.mjs"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@modelcontextprotocol/sdk": "^1.18.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "@vitejs/plugin-react": "5.0.4",
+    "ajv": "^8.17.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "vite": "6.4.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  }
+}

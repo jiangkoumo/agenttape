@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenttape.dev/schemas/tape-v1.schema.json",
+  "title": "AgentTape version 1",
+  "description": "Stable evidence contract shared by the AgentTape recorder, MCP server, structural replay, Branch Canvas, and CI runner.",
+  "$ref": "#/$defs/run",
+  "$defs": {
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "version", "id", "status", "capturedAt", "completedAt", "source", "summary", "limitations", "events"],
+      "properties": {
+        "format": { "const": "agenttape.tape" },
+        "version": { "const": 1 },
+        "id": { "type": "string", "pattern": "^tape_[A-Za-z0-9._-]+$" },
+        "status": { "enum": ["captured", "failed", "passed"] },
+        "capturedAt": { "$ref": "#/$defs/timestamp" },
+        "completedAt": { "$ref": "#/$defs/timestamp" },
+        "source": { "$ref": "#/$defs/source" },
+        "summary": { "$ref": "#/$defs/summary" },
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "events": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/event" } },
+        "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+        "redactions": { "$ref": "#/$defs/redaction" },
+        "fork": { "$ref": "#/$defs/fork" },
+        "injection": { "$ref": "#/$defs/injection" },
+        "assertions": { "type": "array", "items": { "$ref": "#/$defs/assertion" } },
+        "replay": { "$ref": "#/$defs/replay" }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "sessionId", "cwd", "coverage"],
+      "properties": {
+        "adapter": { "type": "string", "minLength": 1 },
+        "sessionId": { "type": "string", "minLength": 1 },
+        "turnId": { "type": "string", "minLength": 1 },
+        "cwd": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "coverage": { "enum": ["complete", "supported-local-hooks", "partial", "unknown"] }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventCount", "toolCallCount", "failedToolCallCount"],
+      "properties": {
+        "eventCount": { "type": "integer", "minimum": 0 },
+        "toolCallCount": { "type": "integer", "minimum": 0 },
+        "failedToolCallCount": { "type": "integer", "minimum": 0 },
+        "firstFailureSequence": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "recordedAt", "type"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "recordedAt": { "$ref": "#/$defs/timestamp" },
+        "type": { "type": "string", "minLength": 1 },
+        "turnId": { "type": "string", "minLength": 1 },
+        "permissionMode": { "type": "string", "minLength": 1 },
+        "tool": { "$ref": "#/$defs/toolEvent" },
+        "details": {}
+      }
+    },
+    "toolEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "useId": { "type": "string", "minLength": 1 },
+        "input": {},
+        "output": {},
+        "failed": { "type": "boolean" },
+        "failure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reason"],
+          "properties": {
+            "kind": { "type": "string", "minLength": 1 },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "mediaType", "sha256", "path", "redacted"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["tool_input", "tool_output", "transcript", "diff", "other"] },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "path": { "type": "string", "minLength": 1 },
+        "redacted": { "type": "boolean" }
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applied", "count", "strategy", "paths"],
+      "properties": {
+        "applied": { "type": "boolean" },
+        "count": { "type": "integer", "minimum": 0 },
+        "strategy": { "const": "agenttape-v1" },
+        "paths": { "type": "array", "items": { "type": "string", "pattern": "^/" } }
+      }
+    },
+    "fork": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceTapeId", "boundarySequence", "createdAt"],
+      "properties": {
+        "sourceTapeId": { "type": "string", "pattern": "^tape_[A-Za-z0-9._-]+$" },
+        "boundarySequence": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "injection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "targetSequence", "mode"],
+      "properties": {
+        "kind": { "enum": ["permission_denied", "timeout", "malformed_json", "truncated_response"] },
+        "targetSequence": { "type": "integer", "minimum": 1 },
+        "mode": { "const": "recorded-result-substitution" },
+        "parameters": {}
+      }
+    },
+    "assertion": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "path", "expected"],
+          "properties": {
+            "kind": { "const": "field_equals" },
+            "path": { "type": "string", "pattern": "^/" },
+            "expected": {}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "toolName"],
+          "properties": {
+            "kind": { "enum": ["tool_present", "tool_absent"] },
+            "toolName": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "maximum"],
+          "properties": {
+            "kind": { "const": "max_retries" },
+            "maximum": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "expected"],
+          "properties": {
+            "kind": { "const": "final_status" },
+            "expected": { "enum": ["captured", "failed", "passed"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "minimum"],
+          "properties": {
+            "kind": { "const": "min_replay_confidence" },
+            "minimum": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      ]
+    },
+    "confidenceInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage", "capturedToolResults", "eventSequenceComplete", "externalStateCaptured", "redactionsPresent", "unknownToolCount", "modelCallsBeforeFork"],
+      "properties": {
+        "coverage": { "enum": ["complete", "supported-local-hooks", "partial", "unknown"] },
+        "capturedToolResults": { "type": "boolean" },
+        "eventSequenceComplete": { "type": "boolean" },
+        "externalStateCaptured": { "type": "boolean" },
+        "redactionsPresent": { "type": "boolean" },
+        "unknownToolCount": { "type": "integer", "minimum": 0 },
+        "modelCallsBeforeFork": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "level", "inputs", "reasons"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "level": { "enum": ["high", "medium", "low", "playback_only"] },
+        "inputs": { "$ref": "#/$defs/confidenceInputs" },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "confidence"],
+      "properties": {
+        "mode": { "enum": ["structural", "playback-only"] },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    }
+  }
+}

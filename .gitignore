@@ -1,0 +1,6 @@
+.agent-tape/runtime/
+.agent-tape/tapes/
+node_modules/
+dist/
+.DS_Store
+*.log

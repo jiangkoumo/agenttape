@@ -1,0 +1,28 @@
+{
+  "name": "agenttape",
+  "version": "0.2.3",
+  "description": "Capture Codex tool traces and turn failures as portable .tape evidence.",
+  "author": {
+    "name": "AgentTape"
+  },
+  "license": "MIT",
+  "keywords": ["codex", "debugging", "replay", "regression-testing"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "AgentTape",
+    "shortDescription": "Turn Codex failures into portable evidence.",
+    "longDescription": "Records supported Codex tool events locally, identifies explicit tool failures, and exposes versioned .tape evidence through MCP tools for inspection, structural forks, and regression saving.",
+    "developerName": "AgentTape",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Show the latest AgentTape capture.",
+      "Save the latest failed run as a .tape file.",
+      "List the Codex runs captured by AgentTape."
+    ],
+    "brandColor": "#315CF5",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}
