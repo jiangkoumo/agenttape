@@ -1,12 +1,12 @@
 # AgentTape 开发状态
 
 更新时间：2026-08-21
-版本状态：0.2.3 / owner-only hosted release
-当前里程碑：Phase 2 功能闭环与首个 Sites 发布完成
+版本状态：0.3.0 / remote MCP release candidate
+当前里程碑：Phase 2 本地闭环与 owner-only Sites 发布完成，Phase 3 HTTPS MCP 已通过本地协议/构建验证
 
 ## 一句话状态
 
-AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”的离线闭环；本地 Codex 插件、真实 Branch Canvas 和 owner-only Sites 发布均已完成。公开访问和 Universal Plugins Directory 提交仍是独立的授权/平台阶段。
+AgentTape 已经完成本地“捕获 → 检查 → 分叉 → 注入 → 结构化重放 → 断言 → 保存回归”闭环和 owner-only Sites 发布。0.3.0 进一步提供无状态 Streamable HTTP MCP，真实 MCP v2 客户端测试和 Cloudflare Worker dry-run 均已通过；生产 Worker 部署仍需要 Cloudflare 登录授权。
 
 ## 当前能力
 
@@ -21,8 +21,9 @@ AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化�
 | Local plugin install | 完成 | `agenttape@personal` 0.2.3 已安装并由全新 Codex 进程实际调用 |
 | Offline public demo | 完成 | 构建时由核心 replay 引擎生成；公开模式只读，不访问访客本地文件 |
 | CI / security / privacy | 完成 | GitHub Actions、SECURITY、privacy notes |
-| Sites production deployment | 完成 | v1 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
-| Universal plugin submission | 待外部步骤 | 需要稳定 HTTPS MCP endpoint、开发者资料和提交门户权限 |
+| Sites production deployment | 完成 | v2 部署成功，owner-only URL：`https://agenttape.jiangkoumo.chatgpt.site` |
+| Stateless HTTPS MCP | 发布候选完成 | 4 个只读工具，MCP v2 客户端端到端通过，Worker dry-run 通过 |
+| Universal plugin submission | 待外部步骤 | 需要部署稳定 HTTPS MCP、Cloudflare/OpenAI 身份与提交门户权限 |
 
 ## 关键验证证据
 
@@ -32,6 +33,7 @@ AgentTape 已经完成“捕获 → 检查 → 分叉 → 注入 → 结构化�
 - Codex 0.2.3 实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
 - Sites 保存的版本与已推送源码 SHA 和本地打包产物一致；部署状态为 `succeeded`。
+- HTTP MCP 列出并调用 `validate_tape`、`inspect_tape`、`fork_run`、`run_assertions`；未脱敏、超大和跨域输入均被拒绝。
 
 ## 当前架构
 

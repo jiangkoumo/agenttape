@@ -1,5 +1,7 @@
 .agent-tape/runtime/
 .agent-tape/tapes/
+.agent-tape/build/
+.wrangler/
 node_modules/
 dist/
 .DS_Store

@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "agenttape-mcp-jiangkoumo",
+  "main": "./remote/worker.mjs",
+  "compatibility_date": "2026-08-21",
+  "compatibility_flags": ["nodejs_compat_v2"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "vars": {
+    "AGENTTAPE_ALLOWED_ORIGINS": "https://chatgpt.com,https://platform.openai.com",
+    "AGENTTAPE_WEBSITE_URL": "https://agenttape.jiangkoumo.chatgpt.site"
+  }
+}

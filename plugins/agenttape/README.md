@@ -1,6 +1,6 @@
 # AgentTape for Codex
 
-AgentTape 0.2.3 is a local-first Codex plugin that records supported lifecycle and tool events, marks explicit tool failures, emits a redacted version 1 `.tape`, and turns deterministic structural branches into executable regressions.
+AgentTape 0.3.0 is a local-first Codex plugin that records supported lifecycle and tool events, marks explicit tool failures, emits a redacted version 1 `.tape`, and turns deterministic structural branches into executable regressions. The repository also contains a separately deployable, stateless HTTPS MCP surface for processing caller-supplied redacted tapes.
 
 ## Included
 

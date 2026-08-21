@@ -6,4 +6,6 @@ Captured values pass through recursive redaction for known secret-bearing fields
 
 The published Branch Canvas uses `public/demo/agenttape-demo.json`, generated from the repository's redacted permission-denied fixture. It does not upload, request, or receive a visitor's local `.agent-tape` files. Saving a regression is disabled in public Demo mode.
 
-AgentTape does not provide cloud storage, accounts, analytics collection, telemetry, or team synchronization in the current release.
+The optional remote MCP processes a caller-supplied tape transiently in memory. It refuses tapes that are not explicitly marked as redacted, does not persist tape contents, does not read local files, and does not call a model or live tool. Its Cloudflare infrastructure may retain ordinary request metadata for security, abuse prevention, and reliability; application code does not log request bodies or tool results.
+
+AgentTape does not provide cloud tape storage, accounts, behavioral analytics, or team synchronization in the current release.

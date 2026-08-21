@@ -1,10 +1,8 @@
-import { readFileSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
+import schema from "../schemas/tape-v1.schema.json" with { type: "json" };
 
 export const SUPPORTED_TAPE_VERSION = 1;
 
-const schemaUrl = new URL("../schemas/tape-v1.schema.json", import.meta.url);
-const schema = JSON.parse(readFileSync(schemaUrl, "utf8"));
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateSchema = ajv.compile(schema);
 

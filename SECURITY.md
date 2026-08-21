@@ -14,5 +14,9 @@ Use the repository host's private security-advisory channel when available. Incl
 - Tape reads reject directory escapes, symbolic links, oversized files, invalid schemas, and duplicate tape IDs.
 - Structural replay never calls a model or live tool.
 - The public demo contains only a generated, redacted fixture and cannot access local captures.
+- The remote MCP accepts only caller-supplied tapes marked as redacted, rejects encoded documents over 1 MiB, and has no storage, model calls, or live-tool calls.
+- Remote assertion results omit compared captured values; validation errors report schema paths rather than captured values.
 
 AgentTape cannot redact secrets that never reach supported hooks, and it cannot observe hosted tools outside local hook coverage. Review exported `.tape` files before sharing them.
+
+The `redactions.applied` marker is evidence that the recorder ran; it is not proof that arbitrary free-form content contains no sensitive information. Never send a tape to any remote service without reviewing it first.

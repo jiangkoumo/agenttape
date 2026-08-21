@@ -12,12 +12,24 @@ It records supported Codex hook events, exposes workspace captures through four 
 - Offline assertions with meaningful CLI exit codes.
 - A real local Branch Canvas plus a generated, read-only public demo mode.
 - Repository-local Codex marketplace packaging.
+- A separately deployable Streamable HTTP MCP server for stateless processing of caller-supplied redacted tapes.
 
 AgentTape does not claim bit-exact replay. Hosted tools, uncaptured external state, and downstream model reasoning remain outside structural replay coverage.
 
 ## Hosted demo
 
 The redacted, read-only Branch Canvas is deployed at [agenttape.jiangkoumo.chatgpt.site](https://agenttape.jiangkoumo.chatgpt.site). The first release is owner-only; it never reads or writes a visitor's local workspace.
+
+## Remote MCP release candidate
+
+The Cloudflare Worker under `remote/` exposes `validate_tape`, `inspect_tape`, `fork_run`, and `run_assertions` at `/mcp`. It accepts only explicit AgentTape v1 documents with `redactions.applied: true`, limits requests and tapes to roughly 1 MiB, stores nothing, and performs no model or live-tool calls.
+
+```bash
+npm run test:http-mcp
+npm run build:http-mcp
+```
+
+Production deployment requires an authenticated Cloudflare account. See [Remote MCP architecture](./docs/REMOTE_MCP.md) and the [plugin submission packet](./docs/PLUGIN_SUBMISSION.md).
 
 ## Install locally
 

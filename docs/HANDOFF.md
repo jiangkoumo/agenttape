@@ -2,7 +2,7 @@
 
 更新时间：2026-08-21
 权威工作区：`/Users/jiangkoumo/Documents/ChatGPT/#`
-当前阶段：0.2.3 owner-only hosted release，Phase 2 闭环完成
+当前阶段：0.3.0 remote MCP release candidate，Phase 2 闭环和 owner-only Sites 发布完成
 
 ## 当前可用成果
 
@@ -15,6 +15,7 @@
 - AgentTape 0.2.3 已通过本地 marketplace 安装和全新 Codex 进程工具调用。
 - Sites 构建输出位于 `dist/client/`、`dist/server/` 和 `dist/.openai/`。
 - Owner-only Sites 版本已部署到 `https://agenttape.jiangkoumo.chatgpt.site`。
+- `remote/worker.mjs` 提供无状态 Streamable HTTP MCP；本地 MCP v2 客户端和 Wrangler dry-run 已通过。
 
 ## 验证命令
 
@@ -36,8 +37,9 @@ npm run build
 ## 后续发布接力
 
 1. 保留 repo marketplace 作为 Codex 本地分发方式。
-2. 只有在用户明确批准后，才把当前 owner-only Sites 访问策略改为 public 或其他共享范围。
-3. Universal public submission 是独立 Phase 3：需要稳定 HTTPS Streamable MCP endpoint、公开开发者/隐私/条款 URL 和提交门户审核。不要把 bundled stdio 安装描述为 universal plugin 发布。
+2. 完成 Cloudflare 登录后部署 `agenttape-mcp-jiangkoumo`，再对生产 `/mcp` 做全工具回归。
+3. 只有在用户明确批准后，才把当前 owner-only Sites 访问策略改为 public 或其他共享范围。
+4. Universal public submission 还需要开发者身份、Apps Management 权限、域名验证和提交门户审核。不要把 bundled stdio 安装或 release candidate 描述为 universal plugin 发布。
 
 ## 不要修改
 

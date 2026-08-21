@@ -161,10 +161,9 @@ test("serves list_tapes and inspect_tape over the bundled stdio MCP server", asy
     assert.equal(duplicate.isError, true);
     assert.match(duplicate.content[0].text, /REGRESSION_EXISTS/);
 
-    await assert.rejects(
-      () => client.callTool({ name: "inspect_tape", arguments: { id: "../../outside" } }),
-      (error) => error.code === -32602 && error.message.includes("Invalid arguments"),
-    );
+    const invalid = await client.callTool({ name: "inspect_tape", arguments: { id: "../../outside" } });
+    assert.equal(invalid.isError, true);
+    assert.match(invalid.content[0].text, /Invalid arguments/);
   } finally {
     await client.close();
     await rm(workspace, { recursive: true, force: true });
