@@ -13,7 +13,7 @@ const tapeDocumentSchema = z.record(z.string(), z.unknown()).describe(
   "A complete redacted AgentTape version 1 JSON document. redactions.applied must be true and the encoded document must not exceed 1 MiB.",
 );
 const tapeInputSchema = z.object({ tape: tapeDocumentSchema });
-const injectionKindSchema = z.enum(["permission_denied", "timeout", "malformed_json", "truncated_response"]);
+const injectionKindSchema = z.enum(["permission_denied", "timeout", "rate_limited", "malformed_json", "truncated_response"]);
 const forkInputSchema = z.object({
   tape: tapeDocumentSchema,
   boundarySequence: z.number().int().positive(),
@@ -23,6 +23,7 @@ const forkInputSchema = z.object({
     parameters: z.object({
       timeoutMs: z.number().int().min(1).max(300_000).optional(),
       maxBytes: z.number().int().min(1).max(1_048_576).optional(),
+      retryAfterSeconds: z.number().int().min(1).max(86_400).optional(),
     }).optional(),
   }),
 });

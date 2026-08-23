@@ -29,7 +29,7 @@ The root object is the run. Its required evidence fields remain compatible with 
 | `assertions` | Optional executable regression expectations. |
 | `replay` | Optional structural replay mode and confidence evidence. |
 
-Supported injections are `permission_denied`, `timeout`, `malformed_json`, and `truncated_response`. Version 1 permits only `recorded-result-substitution`; live tool or model execution is outside this contract.
+Supported injections are `permission_denied`, `timeout`, `rate_limited`, `malformed_json`, and `truncated_response`. Supported assertions are `field_equals`, `tool_present`, `tool_absent`, `tool_order`, `max_retries`, `final_status`, and `min_replay_confidence`. Version 1 permits only `recorded-result-substitution`; live tool or model execution is outside this contract.
 
 ## Replay confidence
 

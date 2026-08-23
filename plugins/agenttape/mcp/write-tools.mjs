@@ -28,10 +28,11 @@ export async function forkWorkspaceRun(workspaceRoot, options) {
     targetSequence: options.targetSequence,
     injection: {
       kind: options.injection,
-      ...((options.timeoutMs || options.maxBytes) ? {
+      ...((options.timeoutMs || options.maxBytes || options.retryAfterSeconds) ? {
         parameters: {
           ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}),
           ...(options.maxBytes ? { maxBytes: options.maxBytes } : {}),
+          ...(options.retryAfterSeconds ? { retryAfterSeconds: options.retryAfterSeconds } : {}),
         },
       } : {}),
     },

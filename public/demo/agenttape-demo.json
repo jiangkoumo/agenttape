@@ -372,6 +372,122 @@
         "Hosted tools and uncaptured external state remain outside structural replay coverage."
       ]
     },
+    "rate_limited": {
+      "format": "agenttape.replay-result",
+      "version": 1,
+      "sourceTapeId": "tape_fixture_permission_denied",
+      "status": "completed",
+      "mode": "structural",
+      "branch": {
+        "format": "agenttape.branch",
+        "version": 1,
+        "id": "branch_2dd47384b28a",
+        "sourceTapeId": "tape_fixture_permission_denied",
+        "boundarySequence": 2,
+        "targetSequence": 3,
+        "mode": "recorded-result-substitution",
+        "createdAt": "2026-08-21T08:00:03.000Z",
+        "injection": {
+          "kind": "rate_limited",
+          "targetSequence": 3,
+          "mode": "recorded-result-substitution"
+        }
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "recordedAt": "2026-08-21T08:00:00.000Z",
+          "type": "SessionStart",
+          "turnId": "turn-1"
+        },
+        {
+          "sequence": 2,
+          "recordedAt": "2026-08-21T08:00:01.000Z",
+          "type": "PreToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "input": {
+              "repository": "example/project",
+              "authorization": "[REDACTED]"
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "recordedAt": "2026-08-21T08:00:02.000Z",
+          "type": "PostToolUse",
+          "turnId": "turn-1",
+          "tool": {
+            "name": "github.create_issue",
+            "useId": "tool-1",
+            "output": {
+              "status": "failed",
+              "errorCode": "RATE_LIMITED",
+              "error": {
+                "code": "RATE_LIMITED",
+                "message": "Rate limit exceeded (HTTP 429). Please retry later."
+              },
+              "statusCode": 429,
+              "retryAfterSeconds": 60
+            },
+            "failed": true,
+            "failure": {
+              "kind": "rate_limited",
+              "reason": "Injected rate_limited through recorded-result substitution"
+            }
+          }
+        }
+      ],
+      "finalStatus": "failed",
+      "diff": {
+        "targetSequence": 3,
+        "path": "/events/2/tool/output",
+        "before": {
+          "status": "denied",
+          "message": "Permission denied"
+        },
+        "after": {
+          "status": "failed",
+          "errorCode": "RATE_LIMITED",
+          "error": {
+            "code": "RATE_LIMITED",
+            "message": "Rate limit exceeded (HTTP 429). Please retry later."
+          },
+          "statusCode": 429,
+          "retryAfterSeconds": 60
+        },
+        "changed": true
+      },
+      "confidence": {
+        "score": 0.65,
+        "level": "medium",
+        "inputs": {
+          "coverage": "supported-local-hooks",
+          "capturedToolResults": true,
+          "eventSequenceComplete": true,
+          "externalStateCaptured": false,
+          "redactionsPresent": true,
+          "unknownToolCount": 0,
+          "modelCallsBeforeFork": 0
+        },
+        "reasons": [
+          "Coverage is supported-local-hooks.",
+          "External state was not captured.",
+          "Redaction may hide replay-relevant values."
+        ]
+      },
+      "evidence": {
+        "replayedEventCount": 2,
+        "modelCallsBeforeFork": 0,
+        "liveToolCalls": 0
+      },
+      "limitations": [
+        "Replay stops at the injected tool result and does not regenerate downstream agent reasoning.",
+        "Hosted tools and uncaptured external state remain outside structural replay coverage."
+      ]
+    },
     "malformed_json": {
       "format": "agenttape.replay-result",
       "version": 1,

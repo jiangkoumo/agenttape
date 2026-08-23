@@ -53,3 +53,49 @@ test("returns a non-zero exit code and redacted diff for assertion failures", as
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("evaluates tool_order assertions for correct sequence and missing tools", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agenttape-assertion-"));
+  try {
+    const tape = JSON.parse(await readFile(path.join(fixtureRoot, "permission-denied.tape"), "utf8"));
+    tape.events = [
+      { sequence: 1, recordedAt: "2026-08-21T08:00:00.000Z", type: "SessionStart" },
+      { sequence: 2, recordedAt: "2026-08-21T08:00:01.000Z", type: "PostToolUse", tool: { name: "git.status", output: "ok" } },
+      { sequence: 3, recordedAt: "2026-08-21T08:00:02.000Z", type: "PostToolUse", tool: { name: "git.commit", output: "committed" } },
+    ];
+    tape.summary.eventCount = 3;
+    tape.summary.toolCallCount = 2;
+    tape.summary.failedToolCallCount = 0;
+    tape.fork.boundarySequence = 2;
+    tape.injection = { kind: "rate_limited", targetSequence: 3, mode: "recorded-result-substitution" };
+
+    // Passing tool order: git.status before git.commit
+    tape.assertions = [
+      { kind: "tool_order", firstTool: "git.status", secondTool: "git.commit" },
+    ];
+    const passingResult = runRegressionTape(tape);
+    assert.equal(passingResult.passed, true);
+    assert.equal(passingResult.assertions[0].passed, true);
+
+    // Failing tool order: git.commit before git.status
+    tape.assertions = [
+      { kind: "tool_order", firstTool: "git.commit", secondTool: "git.status" },
+    ];
+    const failingResult = runRegressionTape(tape);
+    assert.equal(failingResult.passed, false);
+    assert.equal(failingResult.assertions[0].passed, false);
+
+    // CLI execution of failing tool order
+    const file = path.join(directory, "failing-order.tape");
+    await writeFile(file, `${JSON.stringify(tape, null, 2)}\n`);
+    const cliResult = spawnSync(process.execPath, [cli, "test", file], {
+      cwd: projectRoot,
+      encoding: "utf8",
+      env: { PATH: process.env.PATH || "" },
+    });
+    assert.equal(cliResult.status, 1);
+    assert.match(cliResult.stderr, /\[tool_order\]/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

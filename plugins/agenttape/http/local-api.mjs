@@ -56,6 +56,9 @@ function branchOptions(body, { allowSave = false } = {}) {
     ...(body.maxBytes == null ? {} : {
       maxBytes: requirePositiveInteger(body.maxBytes, "maxBytes", true),
     }),
+    ...(body.retryAfterSeconds == null ? {} : {
+      retryAfterSeconds: requirePositiveInteger(body.retryAfterSeconds, "retryAfterSeconds", true),
+    }),
     ...(allowSave && body.filename ? { filename: body.filename } : {}),
     ...(allowSave ? { overwrite: false } : {}),
   };

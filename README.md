@@ -25,7 +25,7 @@ save assertions → run offline in CI
 - **Failure artifact, not another dashboard.** A `.tape` is portable evidence you can inspect, review, share, and commit with a bug fix.
 - **Codex-native capture.** Bundled hooks record supported lifecycle, permission, and tool events after the user reviews and trusts them—no application instrumentation required.
 - **Local and privacy-conscious.** Runtime captures stay inside the active project, and common secret-bearing fields are recursively redacted before export.
-- **Controlled failure injection.** Fork recorded evidence with permission-denied, timeout, malformed-JSON, or truncated-response results.
+- **Controlled failure injection.** Fork recorded evidence with permission-denied, timeout, rate-limited, malformed-JSON, or truncated-response results.
 - **Offline regression tests.** Structural replay and assertions use captured evidence with zero model calls and zero live tool calls.
 - **Honest replay confidence.** AgentTape reports coverage and limitations instead of claiming every external system can be reproduced bit for bit.
 
@@ -86,6 +86,7 @@ AgentTape currently supports deterministic checks for:
 
 - A field equals an expected value.
 - A tool is present or absent.
+- Tool execution order matches expectations.
 - Retry count stays below a maximum.
 - The final run status matches the expected status.
 - Replay confidence meets a minimum threshold.

@@ -22116,7 +22116,7 @@ var tape_v1_schema_default = {
       additionalProperties: false,
       required: ["kind", "targetSequence", "mode"],
       properties: {
-        kind: { enum: ["permission_denied", "timeout", "malformed_json", "truncated_response"] },
+        kind: { enum: ["permission_denied", "timeout", "rate_limited", "malformed_json", "truncated_response"] },
         targetSequence: { type: "integer", minimum: 1 },
         mode: { const: "recorded-result-substitution" },
         parameters: {}
@@ -22141,6 +22141,16 @@ var tape_v1_schema_default = {
           properties: {
             kind: { enum: ["tool_present", "tool_absent"] },
             toolName: { type: "string", minLength: 1 }
+          }
+        },
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["kind", "firstTool", "secondTool"],
+          properties: {
+            kind: { const: "tool_order" },
+            firstTool: { type: "string", minLength: 1 },
+            secondTool: { type: "string", minLength: 1 }
           }
         },
         {
@@ -22467,6 +22477,7 @@ import { createHash } from "node:crypto";
 var SUPPORTED_INJECTIONS = [
   "permission_denied",
   "timeout",
+  "rate_limited",
   "malformed_json",
   "truncated_response"
 ];
@@ -22499,6 +22510,16 @@ function injectedOutput(kind, parameters = {}) {
   if (kind === "timeout") {
     const timeoutMs = Number.isInteger(parameters.timeoutMs) ? Math.min(Math.max(parameters.timeoutMs, 1), 3e5) : 3e4;
     return { status: "failed", errorCode: "TIMEOUT", error: { code: "TIMEOUT", message: "Tool call timed out" }, timeoutMs };
+  }
+  if (kind === "rate_limited") {
+    const retryAfterSeconds = Number.isInteger(parameters.retryAfterSeconds) ? Math.min(Math.max(parameters.retryAfterSeconds, 1), 86400) : 60;
+    return {
+      status: "failed",
+      errorCode: "RATE_LIMITED",
+      error: { code: "RATE_LIMITED", message: "Rate limit exceeded (HTTP 429). Please retry later." },
+      statusCode: 429,
+      retryAfterSeconds
+    };
   }
   if (kind === "malformed_json") {
     return { status: "error", errorCode: "MALFORMED_JSON", error: { code: "MALFORMED_JSON", message: "Recorded response is not valid JSON" } };
@@ -22623,10 +22644,11 @@ async function forkWorkspaceRun(workspaceRoot, options) {
     targetSequence: options.targetSequence,
     injection: {
       kind: options.injection,
-      ...options.timeoutMs || options.maxBytes ? {
+      ...options.timeoutMs || options.maxBytes || options.retryAfterSeconds ? {
         parameters: {
           ...options.timeoutMs ? { timeoutMs: options.timeoutMs } : {},
-          ...options.maxBytes ? { maxBytes: options.maxBytes } : {}
+          ...options.maxBytes ? { maxBytes: options.maxBytes } : {},
+          ...options.retryAfterSeconds ? { retryAfterSeconds: options.retryAfterSeconds } : {}
         }
       } : {}
     }
@@ -22730,11 +22752,12 @@ var eventSchema = external_exports.object({
   }).optional(),
   details: external_exports.unknown().optional()
 });
-var injectionKindSchema = external_exports.enum(["permission_denied", "timeout", "malformed_json", "truncated_response"]);
+var injectionKindSchema = external_exports.enum(["permission_denied", "timeout", "rate_limited", "malformed_json", "truncated_response"]);
 var assertionInputSchema = external_exports.discriminatedUnion("kind", [
   external_exports.object({ kind: external_exports.literal("field_equals"), path: external_exports.string().regex(/^\//), expected: external_exports.unknown() }),
   external_exports.object({ kind: external_exports.literal("tool_present"), toolName: external_exports.string().min(1) }),
   external_exports.object({ kind: external_exports.literal("tool_absent"), toolName: external_exports.string().min(1) }),
+  external_exports.object({ kind: external_exports.literal("tool_order"), firstTool: external_exports.string().min(1), secondTool: external_exports.string().min(1) }),
   external_exports.object({ kind: external_exports.literal("max_retries"), maximum: external_exports.number().int().nonnegative() }),
   external_exports.object({ kind: external_exports.literal("final_status"), expected: external_exports.enum(["captured", "failed", "passed"]) }),
   external_exports.object({ kind: external_exports.literal("min_replay_confidence"), minimum: external_exports.number().min(0).max(1) })
@@ -22746,7 +22769,8 @@ var branchRequestSchema = {
   targetSequence: external_exports.number().int().positive().optional(),
   injection: injectionKindSchema,
   timeoutMs: external_exports.number().int().min(1).max(3e5).optional(),
-  maxBytes: external_exports.number().int().min(1).max(1048576).optional()
+  maxBytes: external_exports.number().int().min(1).max(1048576).optional(),
+  retryAfterSeconds: external_exports.number().int().min(1).max(86400).optional()
 };
 var branchResultSchema = {
   sourceTapeId: external_exports.string(),

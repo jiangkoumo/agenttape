@@ -10,6 +10,7 @@ import { forkTape, inspectTape, listTapes, loadDemo, saveRegression } from "./ag
 const INJECTIONS = [
   ["permission_denied", "Permission denied", "Substitute a denied tool result"],
   ["timeout", "Tool timeout", "Substitute a deterministic timeout"],
+  ["rate_limited", "Rate limited (429)", "Substitute a 429 rate limit with retry-after"],
   ["malformed_json", "Malformed JSON", "Substitute an invalid JSON result"],
   ["truncated_response", "Truncated response", "Substitute a bounded response"],
 ];

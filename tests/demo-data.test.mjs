@@ -16,6 +16,7 @@ test("publishes a deterministic, redacted, offline demo bundle", async () => {
   assert.deepEqual(Object.keys(demo.forks).sort(), [
     "malformed_json",
     "permission_denied",
+    "rate_limited",
     "timeout",
     "truncated_response",
   ]);

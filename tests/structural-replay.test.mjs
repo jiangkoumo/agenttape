@@ -18,6 +18,7 @@ const fixture = JSON.parse(await readFile(
 const expectedCodes = {
   permission_denied: "PERMISSION_DENIED",
   timeout: "TIMEOUT",
+  rate_limited: "RATE_LIMITED",
   malformed_json: "MALFORMED_JSON",
   truncated_response: "TRUNCATED_RESPONSE",
 };
@@ -27,7 +28,7 @@ test("replays all supported injections deterministically without model or live t
     const options = {
       boundarySequence: 2,
       targetSequence: 3,
-      injection: { kind, parameters: { timeoutMs: 1234, maxBytes: 512 } },
+      injection: { kind, parameters: { timeoutMs: 1234, maxBytes: 512, retryAfterSeconds: 120 } },
     };
     const first = structuralReplay(fixture, options);
     const second = structuralReplay(fixture, options);
@@ -37,6 +38,10 @@ test("replays all supported injections deterministically without model or live t
     assert.equal(first.mode, "structural");
     assert.equal(first.events.length, 3);
     assert.equal(first.events[2].tool.output.error.code, expectedCodes[kind]);
+    if (kind === "rate_limited") {
+      assert.equal(first.events[2].tool.output.statusCode, 429);
+      assert.equal(first.events[2].tool.output.retryAfterSeconds, 120);
+    }
     assert.equal(first.evidence.modelCallsBeforeFork, 0);
     assert.equal(first.evidence.liveToolCalls, 0);
     assert.equal(first.diff.targetSequence, 3);

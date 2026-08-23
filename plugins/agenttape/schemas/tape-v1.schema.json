@@ -130,7 +130,7 @@
       "additionalProperties": false,
       "required": ["kind", "targetSequence", "mode"],
       "properties": {
-        "kind": { "enum": ["permission_denied", "timeout", "malformed_json", "truncated_response"] },
+        "kind": { "enum": ["permission_denied", "timeout", "rate_limited", "malformed_json", "truncated_response"] },
         "targetSequence": { "type": "integer", "minimum": 1 },
         "mode": { "const": "recorded-result-substitution" },
         "parameters": {}
@@ -155,6 +155,16 @@
           "properties": {
             "kind": { "enum": ["tool_present", "tool_absent"] },
             "toolName": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "firstTool", "secondTool"],
+          "properties": {
+            "kind": { "const": "tool_order" },
+            "firstTool": { "type": "string", "minLength": 1 },
+            "secondTool": { "type": "string", "minLength": 1 }
           }
         },
         {

@@ -22,7 +22,7 @@ function summarize(entry) {
       firstFailure: {
         sequence: firstFailure.sequence,
         toolName: firstFailure.tool.name,
-        reason: firstFailure.tool.failure.reason,
+        reason: firstFailure.tool.failure?.reason || "Recorded tool failure",
       },
     } : {}),
   };

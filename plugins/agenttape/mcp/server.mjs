@@ -49,11 +49,12 @@ const eventSchema = z.object({
   }).optional(),
   details: z.unknown().optional(),
 });
-const injectionKindSchema = z.enum(["permission_denied", "timeout", "malformed_json", "truncated_response"]);
+const injectionKindSchema = z.enum(["permission_denied", "timeout", "rate_limited", "malformed_json", "truncated_response"]);
 const assertionInputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("field_equals"), path: z.string().regex(/^\//), expected: z.unknown() }),
   z.object({ kind: z.literal("tool_present"), toolName: z.string().min(1) }),
   z.object({ kind: z.literal("tool_absent"), toolName: z.string().min(1) }),
+  z.object({ kind: z.literal("tool_order"), firstTool: z.string().min(1), secondTool: z.string().min(1) }),
   z.object({ kind: z.literal("max_retries"), maximum: z.number().int().nonnegative() }),
   z.object({ kind: z.literal("final_status"), expected: z.enum(["captured", "failed", "passed"]) }),
   z.object({ kind: z.literal("min_replay_confidence"), minimum: z.number().min(0).max(1) }),
@@ -66,6 +67,7 @@ const branchRequestSchema = {
   injection: injectionKindSchema,
   timeoutMs: z.number().int().min(1).max(300_000).optional(),
   maxBytes: z.number().int().min(1).max(1_048_576).optional(),
+  retryAfterSeconds: z.number().int().min(1).max(86_400).optional(),
 };
 const branchResultSchema = {
   sourceTapeId: z.string(),

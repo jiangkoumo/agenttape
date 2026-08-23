@@ -50,8 +50,8 @@ function hasFailureSignal(value, depth = 0) {
   for (const [key, item] of Object.entries(value)) {
     if (/^(?:is_error|isError)$/i.test(key) && item === true) return true;
     if (/^(?:success|ok)$/i.test(key) && item === false) return true;
-    if (/^(?:exit_code|exitCode)$/i.test(key) && Number(item) !== 0) return true;
-    if (/^(?:status_code|statusCode)$/i.test(key) && Number(item) >= 400) return true;
+    if (/^(?:exit_code|exitCode)$/i.test(key) && item != null && Number.isFinite(Number(item)) && Number(item) !== 0) return true;
+    if (/^(?:status_code|statusCode)$/i.test(key) && item != null && Number.isFinite(Number(item)) && Number(item) >= 400) return true;
     if (/^(?:status|state)$/i.test(key) && typeof item === "string" && FAILURE_STATUS.test(item)) return true;
     if (hasFailureSignal(item, depth + 1)) return true;
   }
@@ -217,11 +217,15 @@ export async function listTapes(cwd = process.cwd()) {
     throw error;
   }
 
-  const tapes = await Promise.all(names.map(async (name) => {
+  const tapes = (await Promise.all(names.map(async (name) => {
     const file = path.join(directory, name);
-    const [content, metadata] = await Promise.all([readFile(file, "utf8"), stat(file)]);
-    return { file, tape: JSON.parse(content), modifiedAt: metadata.mtimeMs };
-  }));
+    try {
+      const [content, metadata] = await Promise.all([readFile(file, "utf8"), stat(file)]);
+      return { file, tape: JSON.parse(content), modifiedAt: metadata.mtimeMs };
+    } catch {
+      return null;
+    }
+  }))).filter(Boolean);
 
   return tapes.sort((left, right) => right.modifiedAt - left.modifiedAt);
 }

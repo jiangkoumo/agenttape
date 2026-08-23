@@ -43,6 +43,22 @@ function evaluate(assertion, result) {
       message: `Expected tool ${assertion.toolName} to be ${expected ? "present" : "absent"}.`,
     };
   }
+  if (assertion.kind === "tool_order") {
+    const tools = completedToolCalls(result).map((event) => event.tool.name);
+    const firstIndex = tools.indexOf(assertion.firstTool);
+    const secondIndex = tools.indexOf(assertion.secondTool);
+    const passed = firstIndex !== -1 && secondIndex !== -1 && firstIndex < secondIndex;
+    return {
+      passed,
+      expected: `${assertion.firstTool} before ${assertion.secondTool}`,
+      actual: firstIndex === -1
+        ? `missing ${assertion.firstTool}`
+        : secondIndex === -1
+          ? `missing ${assertion.secondTool}`
+          : `${assertion.firstTool} at index ${firstIndex}, ${assertion.secondTool} at index ${secondIndex}`,
+      message: `Expected tool ${assertion.firstTool} to be executed before ${assertion.secondTool}.`,
+    };
+  }
   if (assertion.kind === "max_retries") {
     const actual = retryCount(result);
     return {

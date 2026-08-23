@@ -5,6 +5,7 @@ import { calculateReplayConfidence, validateTape } from "../scripts/tape-schema.
 export const SUPPORTED_INJECTIONS = [
   "permission_denied",
   "timeout",
+  "rate_limited",
   "malformed_json",
   "truncated_response",
 ];
@@ -43,6 +44,18 @@ function injectedOutput(kind, parameters = {}) {
       ? Math.min(Math.max(parameters.timeoutMs, 1), 300_000)
       : 30_000;
     return { status: "failed", errorCode: "TIMEOUT", error: { code: "TIMEOUT", message: "Tool call timed out" }, timeoutMs };
+  }
+  if (kind === "rate_limited") {
+    const retryAfterSeconds = Number.isInteger(parameters.retryAfterSeconds)
+      ? Math.min(Math.max(parameters.retryAfterSeconds, 1), 86_400)
+      : 60;
+    return {
+      status: "failed",
+      errorCode: "RATE_LIMITED",
+      error: { code: "RATE_LIMITED", message: "Rate limit exceeded (HTTP 429). Please retry later." },
+      statusCode: 429,
+      retryAfterSeconds,
+    };
   }
   if (kind === "malformed_json") {
     return { status: "error", errorCode: "MALFORMED_JSON", error: { code: "MALFORMED_JSON", message: "Recorded response is not valid JSON" } };
