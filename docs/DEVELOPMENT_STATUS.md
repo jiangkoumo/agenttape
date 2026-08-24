@@ -1,8 +1,8 @@
 # AgentTape 开发状态
 
-更新时间：2026-08-21
-版本状态：0.3.1 / 已公开发布并完成 Git marketplace 实机验收
-当前里程碑：首个可安装开源版本完成
+更新时间：2026-08-23
+版本状态：0.4.0 / 已公开发布并完成 Git marketplace 实机验收
+当前里程碑：扩展故障注入与顺序断言能力
 
 ## 一句话状态
 
@@ -15,12 +15,12 @@ AgentTape 已完成本地“捕获 → 检查 → 分叉 → 注入 → 结构�
 | Hooks recorder / redaction | 完成 | 支持本地 Codex 生命周期、权限和工具事件，输出 redacted tape v1 |
 | Tape schema / fixtures | 完成 | JSON Schema、validator、3 个合成 fixture |
 | Bundled stdio MCP | 完成 | `list_tapes`、`inspect_tape`、`fork_run`、`save_regression` |
-| Structural replay | 完成 | 4 种 recorded-result injection，0 model calls / 0 live tools |
-| Assertions / CLI | 完成 | 6 类断言；通过为 0，失败为非零且 diff 脱敏 |
+| Structural replay | 完成 | 5 种 recorded-result injection（含 rate_limited 429），0 model calls / 0 live tools |
+| Assertions / CLI | 完成 | 7 类断言（含 tool_order 时序断言）；通过为 0，失败为非零且 diff 脱敏 |
 | Repository marketplace | 完成 | marketplace 名为 `agenttape`，插件源为 `./plugins/agenttape` |
 | Plugin validation | 完成 | 当前 Codex 插件校验器、单测和重新安装后的实机 MCP 调用通过 |
 | Open-source metadata | 完成 | MIT、README、SECURITY、CONTRIBUTING、Code of Conduct、Changelog |
-| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.3.1` Release 和公共 GitHub Actions 均已验证 |
+| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.4.0` Release 和公共 GitHub Actions 均已验证 |
 
 ## 关键验证证据
 

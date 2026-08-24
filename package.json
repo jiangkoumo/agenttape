@@ -1,6 +1,6 @@
 {
   "name": "agenttape",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Local-first Codex plugin for redacted failure traces and offline regression tests.",
   "private": true,
   "license": "MIT",

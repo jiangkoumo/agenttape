@@ -1,7 +1,7 @@
 # AgentTape 项目交接
 
-更新时间：2026-08-21
-当前阶段：0.3.1 开源 Codex 插件已发布
+更新时间：2026-08-23
+当前阶段：0.4.0 开源 Codex 插件已发布
 
 ## 正式产品
 
@@ -9,7 +9,7 @@
 - Git marketplace：`.agents/plugins/marketplace.json`，公开名称为 `agenttape`。
 - Hooks recorder、redaction、tape v1 schema、validator 和合成 fixtures。
 - Bundled stdio MCP：`list_tapes`、`inspect_tape`、`fork_run`、`save_regression`。
-- Structural replay、4 种 injection、assertion runner 和 CLI exit semantics。
+- Structural replay、5 种 injection、7 类 assertion runner 和 CLI exit semantics。
 - MIT License、开源贡献规范、安全政策和 GitHub Actions。
 
 Branch Canvas、Sites 构建适配和远程 HTTP MCP 是可选开发组件。它们不得被描述成安装本地 Codex 插件的依赖。
@@ -38,7 +38,7 @@ git diff --check
 ## 已完成发布
 
 - 公共仓库：`https://github.com/jiangkoumo/agenttape`
-- 当前正式版：`v0.3.1`
+- 当前正式版：`v0.4.0`
 - 安装源：`codex plugin marketplace add jiangkoumo/agenttape`
 - 插件安装：`codex plugin add agenttape@agenttape`
 - 公共 CI、GitHub Release、隔离安装和真实 Codex MCP 调用均已通过。
