@@ -1,8 +1,8 @@
 # AgentTape 开发状态
 
-更新时间：2026-08-23
-版本状态：0.4.0 / 已公开发布并完成 Git marketplace 实机验收
-当前里程碑：扩展故障注入与顺序断言能力
+更新时间：2026-08-25
+版本状态：0.4.1 / 已完成真实捕获、CI 闭环和 Git marketplace 实机验收
+当前里程碑：让真实 Codex 失败稳定变成可提交的离线回归
 
 ## 一句话状态
 
@@ -12,19 +12,20 @@ AgentTape 已完成本地“捕获 → 检查 → 分叉 → 注入 → 结构�
 
 | 领域 | 状态 | 已验证事实 |
 | --- | --- | --- |
-| Hooks recorder / redaction | 完成 | 支持本地 Codex 生命周期、权限和工具事件，输出 redacted tape v1 |
+| Hooks recorder / redaction | 完成 | 覆盖当前 11 类 Codex Hook；真实 Bash 退出码、提示词脱敏和 24 路并发写入均已验证 |
 | Tape schema / fixtures | 完成 | JSON Schema、validator、3 个合成 fixture |
 | Bundled stdio MCP | 完成 | `list_tapes`、`inspect_tape`、`fork_run`、`save_regression` |
 | Structural replay | 完成 | 5 种 recorded-result injection（含 rate_limited 429），0 model calls / 0 live tools |
-| Assertions / CLI | 完成 | 7 类断言（含 tool_order 时序断言）；通过为 0，失败为非零且 diff 脱敏 |
+| Assertions / CLI | 完成 | 7 类断言（含 tool_order）；`test tests/agenttape` 批量执行全部已保存回归 |
 | Repository marketplace | 完成 | marketplace 名为 `agenttape`，插件源为 `./plugins/agenttape` |
 | Plugin validation | 完成 | 当前 Codex 插件校验器、单测和重新安装后的实机 MCP 调用通过 |
 | Open-source metadata | 完成 | MIT、README、SECURITY、CONTRIBUTING、Code of Conduct、Changelog |
-| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.4.0` Release 和公共 GitHub Actions 均已验证 |
+| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.4.1` Release 和公共 GitHub Actions 均已验证 |
 
 ## 关键验证证据
 
-- UI 从合成的 permission-denied tape 加载工具失败，并可生成 timeout 分支。
+- 真实 Codex CLI 项目执行 `npm test` 并退出 7；capture 状态为 failed，5 个实际 Hook 事件连续，伪密钥未出现在 tape 中。
+- 同一真实 capture 经 `list_tapes → inspect_tape → fork_run → save_regression` 保存后，由目录级 runner 输出 `PASS 1/1 regression tapes`。
 - 保存后的回归由 CLI 执行：`PASS tape_regression_9f680719a4a7 4/4 assertions`。
 - 从公开 GitHub `v0.3.1` 全新安装后，只读 Codex 进程经工具搜索实机调用 `agenttape/list_tapes`，返回 `tape_fixture_permission_denied`。
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
@@ -55,10 +56,10 @@ record-hook.mjs
 
 1. 公共仓库 `github.com/jiangkoumo/agenttape` 已创建并推送。
 2. GitHub Actions 的 `plugin-release` 和 `optional-surfaces` 检查均通过。
-3. 带注释的 `v0.3.1` 标签和 GitHub Release 已发布。
-4. 已从公共标签运行 `codex plugin marketplace add jiangkoumo/agenttape --ref v0.3.1` 并安装 `agenttape@agenttape`。
+3. 带注释的 `v0.4.1` 标签和 GitHub Release 已发布。
+4. 已从公共标签运行 `codex plugin marketplace add jiangkoumo/agenttape --ref v0.4.1` 并安装 `agenttape@agenttape`。
 5. GitHub 安装的插件已在新只读 Codex 进程中完成 `list_tapes` MCP 实机调用。
 
-`v0.3.0` 首次发布缺少被 Git 跟踪的预构建 MCP bundle；`v0.3.1` 已修复，并在 CI 中新增 bundle 跟踪检查以防回归。
+0.4.1 的完整验收证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)。下一阶段不再继续堆网站功能，而是选择 2–3 个真实 Codex 工程积累 regression fixture，并根据实际失败类型扩展断言和 replay 边界。
 
 Branch Canvas 托管和远程 HTTP MCP 保留为可选后续方向，不计入上述完成条件。

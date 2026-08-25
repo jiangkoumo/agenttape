@@ -119,7 +119,7 @@ async function activeWorkspaceRoot(configuredRoot, requestedRoot, extra, server)
 
 export function createAgentTapeServer({ workspaceRoot } = {}) {
   const server = new McpServer(
-    { name: "agenttape", version: "0.4.0" },
+    { name: "agenttape", version: "0.4.1" },
     {
       instructions: "Read AgentTape captures from the active workspace. The server resolves the workspace from MCP roots or the Codex environment; pass workspaceRoot only when the host cannot expose it. Inspect a tape before making claims about failures or replay confidence. Hosted tools outside local hook coverage may be absent.",
     },

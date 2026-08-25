@@ -1,6 +1,6 @@
 {
   "name": "agenttape",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Local-first Codex plugin for redacted failure traces and offline regression tests.",
   "private": true,
   "license": "MIT",
@@ -14,7 +14,7 @@
   "homepage": "https://github.com/jiangkoumo/agenttape#readme",
   "type": "module",
   "scripts": {
-    "test": "npm run test:release && npm run test:plugin && npm run test:mcp && npm run test:http-mcp && npm run test:api && npm run test:demo && npm run test:replay && npm run test:regression && npm run test:sites",
+    "test": "npm run test:release && npm run test:plugin && npm run test:mcp && npm run test:http-mcp && npm run test:api && npm run test:demo && npm run test:replay && npm run test:regression && npm run test:tapes && npm run test:sites",
     "dev": "node scripts/run-vite.mjs",
     "build": "npm run build:mcp && npm run build:demo && node scripts/run-vite.mjs build && node scripts/prepare-sites-build.mjs && npm run build:http-mcp",
     "build:plugin": "npm run build:mcp",
@@ -31,9 +31,11 @@
     "test:demo": "npm run build:demo && node --test tests/demo-data.test.mjs",
     "test:replay": "node --test tests/structural-replay.test.mjs",
     "test:regression": "node --test tests/assertion-runner.test.mjs",
+    "test:tapes": "node plugins/agenttape/scripts/agenttape.mjs test tests/agenttape",
+    "verify:capture": "node plugins/agenttape/scripts/verify-capture.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "test:release": "node --test tests/release-metadata.test.mjs",
-    "test:plugin-release": "npm run test:release && npm run test:plugin && npm run test:mcp && npm run test:replay && npm run test:regression",
+    "test:plugin-release": "npm run test:release && npm run test:plugin && npm run test:mcp && npm run test:replay && npm run test:regression && npm run test:tapes",
     "deploy:http-mcp": "wrangler deploy",
     "verify:http-mcp": "node scripts/verify-remote-mcp.mjs"
   },
