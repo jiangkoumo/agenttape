@@ -50,7 +50,7 @@ function registerTool(server, name, config, handler, successText) {
 
 export function createRemoteAgentTapeServer() {
   const server = new McpServer(
-    { name: "agenttape-remote", version: "0.4.0" },
+    { name: "agenttape-remote", version: "0.4.1" },
     {
       instructions: "Process only a redacted AgentTape v1 document explicitly supplied by the caller. This stateless server does not read local files, retain tapes, call models, or call live tools. Structural replay stops at the injected tool result.",
     },

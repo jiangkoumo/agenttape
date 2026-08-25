@@ -32,6 +32,17 @@ test("executes every fixed regression tape offline", async () => {
   }
 });
 
+test("executes every saved regression in a directory as one CI command", () => {
+  const result = spawnSync(process.execPath, [cli, "test", path.join(projectRoot, "tests", "agenttape")], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    env: { PATH: process.env.PATH || "" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /PASS tape_regression_/);
+  assert.match(result.stdout, /PASS 1\/1 regression tapes/);
+});
+
 test("returns a non-zero exit code and redacted diff for assertion failures", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agenttape-assertion-"));
   try {

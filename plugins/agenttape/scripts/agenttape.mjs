@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { copyFile, mkdir, readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { listTapes, redact } from "./tape-store.mjs";
 
@@ -35,8 +35,43 @@ function usage() {
     "  agenttape.mjs latest [--json] [--root <project>]",
     "  agenttape.mjs export latest --output <path> [--root <project>]",
     "  agenttape.mjs validate <path>",
-    "  agenttape.mjs test <path>",
+    "  agenttape.mjs test <file-or-directory>",
   ].join("\n");
+}
+
+async function regressionFiles(target) {
+  const metadata = await stat(target);
+  if (!metadata.isDirectory()) return [target];
+  return (await readdir(target, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".tape"))
+    .map((entry) => path.join(target, entry.name))
+    .sort();
+}
+
+async function testRegressionFile(file) {
+  const { TapeValidationError, parseTape } = await import("./tape-schema.mjs");
+  try {
+    const tape = parseTape(await readFile(file, "utf8"));
+    const { runRegressionTape } = await import("../replay/assertions.mjs");
+    const result = runRegressionTape(tape);
+    if (result.passed) {
+      console.log(`PASS ${tape.id} ${result.summary.passed}/${result.summary.total} assertions`);
+      return true;
+    }
+
+    process.stderr.write(`FAIL ${tape.id}\n`);
+    if (result.error) process.stderr.write(`- ${result.error.code}: ${result.error.message}\n`);
+    for (const assertion of result.assertions.filter((item) => !item.passed)) {
+      const expected = JSON.stringify(redact(assertion.expected));
+      const actual = JSON.stringify(redact(assertion.actual));
+      process.stderr.write(`- [${assertion.kind}] expected ${expected}, received ${actual}\n`);
+    }
+    return false;
+  } catch (error) {
+    if (!(error instanceof TapeValidationError)) throw error;
+    process.stderr.write(`${path.basename(file)}: ${error.code}: ${error.message}\n`);
+    return false;
+  }
 }
 
 const args = process.argv.slice(2);
@@ -48,34 +83,32 @@ if (command === "validate" || command === "test") {
     process.stderr.write(`${usage()}\n`);
     process.exitCode = 2;
   } else {
-    const { TapeValidationError, parseTape } = await import("./tape-schema.mjs");
-    try {
-      const file = path.resolve(args[1]);
-      const tape = parseTape(await readFile(file, "utf8"));
-      if (command === "validate") {
+    const file = path.resolve(args[1]);
+    if (command === "validate") {
+      const { TapeValidationError, parseTape } = await import("./tape-schema.mjs");
+      try {
+        const tape = parseTape(await readFile(file, "utf8"));
         console.log(`valid ${tape.id} v${tape.version}`);
-      } else {
-        const { runRegressionTape } = await import("../replay/assertions.mjs");
-        const result = runRegressionTape(tape);
-        if (result.passed) {
-          console.log(`PASS ${tape.id} ${result.summary.passed}/${result.summary.total} assertions`);
-        } else {
-          process.stderr.write(`FAIL ${tape.id}\n`);
-          if (result.error) process.stderr.write(`- ${result.error.code}: ${result.error.message}\n`);
-          for (const assertion of result.assertions.filter((item) => !item.passed)) {
-            const expected = JSON.stringify(redact(assertion.expected));
-            const actual = JSON.stringify(redact(assertion.actual));
-            process.stderr.write(`- [${assertion.kind}] expected ${expected}, received ${actual}\n`);
-          }
+      } catch (error) {
+        if (error instanceof TapeValidationError) {
+          process.stderr.write(`${error.code}: ${error.message}\n`);
           process.exitCode = 1;
+        } else {
+          throw error;
         }
       }
-    } catch (error) {
-      if (error instanceof TapeValidationError) {
-        process.stderr.write(`${error.code}: ${error.message}\n`);
-        process.exitCode = 1;
+    } else {
+      const files = await regressionFiles(file);
+      if (!files.length) {
+        process.stderr.write(`No .tape regression files found in ${file}.\n`);
+        process.exitCode = 2;
       } else {
-        throw error;
+        const results = [];
+        for (const tapeFile of files) results.push(await testRegressionFile(tapeFile));
+        if (files.length > 1 || (await stat(file)).isDirectory()) {
+          console.log(`${results.every(Boolean) ? "PASS" : "FAIL"} ${results.filter(Boolean).length}/${files.length} regression tapes`);
+        }
+        if (!results.every(Boolean)) process.exitCode = 1;
       }
     }
   }

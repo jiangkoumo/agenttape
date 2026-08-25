@@ -2,6 +2,15 @@
 
 All notable AgentTape changes are documented here.
 
+## 0.4.1 - 2026-08-25
+
+- Cover all 11 current Codex hook events, including prompts, compaction, and subagent lifecycle events.
+- Preserve event ordering when hook processes write concurrently.
+- Recover real Bash exit status from the current Codex transcript when `PostToolUse` omits it.
+- Redact prompt and lifecycle details, omit transcript paths, and shorten home-directory paths in portable tapes.
+- Add a capture verifier and a directory-level regression command used by CI.
+- Expand the capture skill into the complete inspect, fork, save, and offline-test workflow.
+
 ## 0.4.0 - 2026-08-23
 
 - Add `rate_limited` (HTTP 429) structural failure injection with configurable `retryAfterSeconds`.

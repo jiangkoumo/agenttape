@@ -15,7 +15,7 @@ export async function verifyRemoteMcp(origin, fetchImpl = fetch) {
   const healthResponse = await fetchImpl(new URL("/health", root));
   assert.equal(healthResponse.status, 200, "GET /health must return 200");
   const health = await healthResponse.json();
-  assert.deepEqual(health, { service: "agenttape-remote", version: "0.4.0", status: "ok", storage: "none" });
+  assert.deepEqual(health, { service: "agenttape-remote", version: "0.4.1", status: "ok", storage: "none" });
 
   for (const path of ["/privacy", "/terms", "/support"]) {
     const response = await fetchImpl(new URL(path, root));
@@ -24,7 +24,7 @@ export async function verifyRemoteMcp(origin, fetchImpl = fetch) {
 
   const fixture = JSON.parse(await readFile(fixtureUrl, "utf8"));
   const regression = JSON.parse(await readFile(regressionUrl, "utf8"));
-  const client = new Client({ name: "agenttape-production-verifier", version: "0.4.0" });
+  const client = new Client({ name: "agenttape-production-verifier", version: "0.4.1" });
   const transport = new StreamableHTTPClientTransport(new URL("/mcp", root), { fetch: fetchImpl });
 
   await client.connect(transport);

@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, stat, writeFile, appendFile } from "node:fs/promises";
+import { appendFile, mkdir, open, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 export const TAPE_VERSION = 1;
 
@@ -9,6 +11,24 @@ const FAILURE_STATUS = /^(?:denied|error|failed|failure|forbidden|cancelled)$/i;
 const MAX_STRING_LENGTH = 32_768;
 const MAX_ARRAY_LENGTH = 100;
 const MAX_DEPTH = 8;
+const LOCK_RETRY_COUNT = 250;
+const LOCK_RETRY_DELAY_MS = 10;
+const STALE_LOCK_MS = 30_000;
+const MAX_TRANSCRIPT_TAIL_BYTES = 4 * 1024 * 1024;
+const EVENT_DETAIL_OMISSIONS = new Set([
+  "session_id",
+  "transcript_path",
+  "cwd",
+  "hook_event_name",
+  "model",
+  "turn_id",
+  "permission_mode",
+  "tool_name",
+  "tool_use_id",
+  "tool_input",
+  "tool_response",
+  "agent_transcript_path",
+]);
 
 function redactString(value) {
   const truncated = value.length > MAX_STRING_LENGTH
@@ -68,6 +88,16 @@ function captureRoot(cwd) {
   return path.join(path.resolve(cwd || process.cwd()), ".agent-tape");
 }
 
+function portableCwd(cwd) {
+  const resolved = path.resolve(cwd || process.cwd());
+  const home = os.homedir();
+  if (resolved === home) return "~";
+  if (resolved.startsWith(`${home}${path.sep}`)) {
+    return `~/${path.relative(home, resolved).split(path.sep).join("/")}`;
+  }
+  return resolved;
+}
+
 function runtimePath(payload) {
   const session = safeSegment(payload.session_id, "unknown-session");
   return path.join(captureRoot(payload.cwd), "runtime", `${session}.jsonl`);
@@ -86,7 +116,122 @@ async function readEvents(file) {
   }
 }
 
-function eventFromPayload(payload, sequence) {
+async function resolveTranscriptPath(payload) {
+  if (payload.transcript_path) return payload.transcript_path;
+  if (!payload.session_id) return undefined;
+
+  const sessionSuffix = `-${safeSegment(payload.session_id, "unknown-session")}.jsonl`;
+  const homes = new Set([process.env.CODEX_HOME, path.join(os.homedir(), ".codex")].filter(Boolean));
+  for (const home of homes) {
+    const sessionsRoot = path.join(home, "sessions");
+    for (const dayOffset of [0, -1, 1]) {
+      const date = new Date(Date.now() + dayOffset * 86_400_000);
+      const directory = path.join(
+        sessionsRoot,
+        String(date.getFullYear()),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      );
+      try {
+        const name = (await readdir(directory)).find((entry) => entry.endsWith(sessionSuffix));
+        if (name) return path.join(directory, name);
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    }
+  }
+  return undefined;
+}
+
+async function transcriptToolEvidence(payload) {
+  if (payload.hook_event_name !== "PostToolUse" || !payload.tool_use_id) {
+    return undefined;
+  }
+  const transcriptPath = await resolveTranscriptPath(payload);
+  if (!transcriptPath) return undefined;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    let handle;
+    try {
+      const metadata = await stat(transcriptPath);
+      const length = Math.min(metadata.size, MAX_TRANSCRIPT_TAIL_BYTES);
+      const offset = metadata.size - length;
+      const buffer = Buffer.alloc(length);
+      handle = await open(transcriptPath, "r");
+      await handle.read(buffer, 0, length, offset);
+      let content = buffer.toString("utf8");
+      if (offset > 0) content = content.slice(content.indexOf("\n") + 1);
+
+      for (const line of content.trimEnd().split("\n").reverse()) {
+        let row;
+        try {
+          row = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        const item = row?.payload?.item;
+        if (item?.id !== payload.tool_use_id) continue;
+        const exitCode = Number.isFinite(Number(item.exit_code)) ? Number(item.exit_code) : undefined;
+        const status = typeof item.status === "string" ? item.status : undefined;
+        return {
+          failed: (exitCode !== undefined && exitCode !== 0) || FAILURE_STATUS.test(status || ""),
+          ...(status ? { status } : {}),
+          ...(exitCode !== undefined ? { exitCode } : {}),
+        };
+      }
+    } catch {
+      // The transcript may not be visible to the hook process yet. Retry briefly.
+    } finally {
+      await handle?.close();
+    }
+    if (attempt < 5) await delay(20);
+  }
+  return undefined;
+}
+
+async function withRuntimeLock(file, callback) {
+  const lock = `${file}.lock`;
+
+  for (let attempt = 0; attempt < LOCK_RETRY_COUNT; attempt += 1) {
+    let acquired = false;
+    try {
+      await mkdir(lock);
+      acquired = true;
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      try {
+        const metadata = await stat(lock);
+        if (Date.now() - metadata.mtimeMs > STALE_LOCK_MS) {
+          await rm(lock, { recursive: true, force: true });
+          continue;
+        }
+      } catch (metadataError) {
+        if (metadataError.code !== "ENOENT") throw metadataError;
+      }
+      await delay(LOCK_RETRY_DELAY_MS);
+    }
+    if (!acquired) continue;
+    try {
+      return await callback();
+    } finally {
+      await rm(lock, { recursive: true, force: true });
+    }
+  }
+
+  throw new Error("Timed out waiting for the AgentTape runtime lock.");
+}
+
+function eventDetails(payload) {
+  const details = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (!EVENT_DETAIL_OMISSIONS.has(key)) details[key] = value;
+  }
+  if (payload.transcript_path) details.transcript_available = true;
+  if (payload.agent_transcript_path) details.agent_transcript_available = true;
+  return Object.keys(details).length ? redact(details) : undefined;
+}
+
+function eventFromPayload(payload, sequence, execution) {
   const type = String(payload.hook_event_name || "Unknown");
   const event = {
     sequence,
@@ -103,29 +248,25 @@ function eventFromPayload(payload, sequence) {
       ...(payload.tool_input !== undefined ? { input: redact(payload.tool_input) } : {}),
       ...(payload.tool_response !== undefined ? { output: redact(payload.tool_response) } : {}),
     };
-    if (type === "PostToolUse" && hasFailureSignal(payload.tool_response)) {
+    if (type === "PostToolUse" && (hasFailureSignal(payload.tool_response) || execution?.failed)) {
       event.tool.failed = true;
-      event.tool.failure = { kind: "tool_error", reason: "Explicit failure signal in tool response" };
+      event.tool.failure = {
+        kind: "tool_error",
+        reason: execution?.exitCode !== undefined
+          ? `Codex recorded tool exit code ${execution.exitCode}`
+          : "Explicit failure signal in tool response",
+      };
     }
   }
 
-  if (type === "PermissionRequest") {
-    const details = { ...payload };
-    for (const key of [
-      "session_id",
-      "transcript_path",
-      "cwd",
-      "hook_event_name",
-      "model",
-      "turn_id",
-      "permission_mode",
-      "tool_name",
-      "tool_use_id",
-      "tool_input",
-      "tool_response",
-    ]) delete details[key];
-    if (Object.keys(details).length) event.details = redact(details);
+  const details = eventDetails(payload) || {};
+  if (execution) {
+    details.execution = {
+      ...(execution.status ? { status: execution.status } : {}),
+      ...(execution.exitCode !== undefined ? { exitCode: execution.exitCode } : {}),
+    };
   }
+  if (Object.keys(details).length) event.details = details;
 
   return event;
 }
@@ -162,7 +303,7 @@ function buildTape(payload, events) {
       adapter: "codex-hooks",
       sessionId: String(payload.session_id || "unknown-session"),
       ...(payload.turn_id ? { turnId: String(payload.turn_id) } : {}),
-      cwd: path.resolve(payload.cwd || process.cwd()),
+      cwd: portableCwd(payload.cwd),
       ...(payload.model ? { model: String(payload.model) } : {}),
       coverage: "supported-local-hooks",
     },
@@ -196,15 +337,18 @@ async function finalize(payload, events) {
 export async function recordHook(payload) {
   const file = runtimePath(payload);
   await mkdir(path.dirname(file), { recursive: true });
-  const events = await readEvents(file);
-  const event = eventFromPayload(payload, events.length + 1);
-  await appendFile(file, `${JSON.stringify(event)}\n`, "utf8");
-  events.push(event);
+  const execution = await transcriptToolEvidence(payload);
+  return withRuntimeLock(file, async () => {
+    const events = await readEvents(file);
+    const event = eventFromPayload(payload, events.length + 1, execution);
+    await appendFile(file, `${JSON.stringify(event)}\n`, "utf8");
+    events.push(event);
 
-  if (payload.hook_event_name === "Stop" || payload.hook_event_name === "SessionEnd") {
-    return finalize(payload, events);
-  }
-  return null;
+    if (payload.hook_event_name === "Stop" || payload.hook_event_name === "SessionEnd") {
+      return finalize(payload, events);
+    }
+    return null;
+  });
 }
 
 export async function listTapes(cwd = process.cwd()) {

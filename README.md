@@ -23,7 +23,7 @@ save assertions → run offline in CI
 ## Why AgentTape
 
 - **Failure artifact, not another dashboard.** A `.tape` is portable evidence you can inspect, review, share, and commit with a bug fix.
-- **Codex-native capture.** Bundled hooks record supported lifecycle, permission, and tool events after the user reviews and trusts them—no application instrumentation required.
+- **Codex-native capture.** Bundled hooks cover the 11 current Codex lifecycle, prompt, compaction, subagent, permission, and local tool events after the user reviews and trusts them—no application instrumentation required.
 - **Local and privacy-conscious.** Runtime captures stay inside the active project, and common secret-bearing fields are recursively redacted before export.
 - **Controlled failure injection.** Fork recorded evidence with permission-denied, timeout, rate-limited, malformed-JSON, or truncated-response results.
 - **Offline regression tests.** Structural replay and assertions use captured evidence with zero model calls and zero live tool calls.
@@ -61,11 +61,12 @@ AgentTape exposes four MCP tools:
 Run a saved regression locally or in CI:
 
 ```bash
-node plugins/agenttape/scripts/agenttape.mjs test \
-  tests/agenttape/fixture_permission_denied-timeout.tape
+node plugins/agenttape/scripts/agenttape.mjs test tests/agenttape
 ```
 
 Passing assertions exit with code `0`. Validation or assertion failures exit nonzero, and captured comparison values are omitted from failure output.
+
+The repository CI runs the same directory command through `npm run test:tapes`, so every reviewed `.tape` added under `tests/agenttape/` becomes an offline regression automatically.
 
 ## What a `.tape` captures
 
