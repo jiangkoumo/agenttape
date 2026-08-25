@@ -1,7 +1,7 @@
 # AgentTape 项目交接
 
 更新时间：2026-08-25
-当前阶段：0.4.1 开源 Codex 插件已完成真实项目和 CI 闭环验收
+当前阶段：0.4.2 开源 Codex 插件已完成跨项目、公开安装和 CI 闭环验收
 
 ## 正式产品
 
@@ -39,12 +39,12 @@ git diff --check
 ## 已完成发布
 
 - 公共仓库：`https://github.com/jiangkoumo/agenttape`
-- 当前正式版：`v0.4.1`
+- 当前正式版：`v0.4.2`
 - 安装源：`codex plugin marketplace add jiangkoumo/agenttape`
 - 插件安装：`codex plugin add agenttape@agenttape`
 - 公共 CI、GitHub Release、隔离安装和真实 Codex MCP 调用均已通过。
 
-`v0.3.0` 因未将预构建 MCP bundle 纳入 Git 而被 `v0.3.1` 取代。发布 CI 现在会同时检查 bundle 已被 Git 跟踪且重新构建后无差异。
+`v0.3.0` 因未将预构建 MCP bundle 纳入 Git 而被 `v0.3.1` 取代。`v0.4.1` 又在 ToolFence 跨项目验证中暴露出离线 CLI 依赖仓库 `node_modules` 的问题，因此 `v0.4.2` 将 MCP、CLI 和 capture verifier 全部作为自包含 bundle 发布。发布 CI 会检查三个 bundle 已被 Git 跟踪且重新构建后无差异。
 
 ## 后续方向
 
@@ -52,4 +52,4 @@ git diff --check
 2. 根据真实 fixture 扩展结构化 replay 断言，同时保持 tape v1 向后兼容。
 3. Branch Canvas、Sites 和远程 HTTP MCP 仅在有明确需求时继续，不作为本地插件安装依赖。
 
-0.4.1 的实际 Bash 退出 7、脱敏、MCP 分叉保存和离线 CI 证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)。
+0.4.1 的实际 Bash 退出 7、脱敏、MCP 分叉保存和离线 CI 证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)。ToolFence 跨项目使用、安装态 CLI 修复和公开 `v0.4.2` 验证见 [`V0_4_2_VALIDATION.md`](./V0_4_2_VALIDATION.md)。

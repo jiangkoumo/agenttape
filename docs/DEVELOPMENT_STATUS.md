@@ -1,7 +1,7 @@
 # AgentTape 开发状态
 
 更新时间：2026-08-25
-版本状态：0.4.1 / 已完成真实捕获、CI 闭环和 Git marketplace 实机验收
+版本状态：0.4.2 / 已完成跨项目捕获、安装态 CLI、CI 闭环和 Git marketplace 实机验收
 当前里程碑：让真实 Codex 失败稳定变成可提交的离线回归
 
 ## 一句话状态
@@ -16,11 +16,11 @@ AgentTape 已完成本地“捕获 → 检查 → 分叉 → 注入 → 结构�
 | Tape schema / fixtures | 完成 | JSON Schema、validator、3 个合成 fixture |
 | Bundled stdio MCP | 完成 | `list_tapes`、`inspect_tape`、`fork_run`、`save_regression` |
 | Structural replay | 完成 | 5 种 recorded-result injection（含 rate_limited 429），0 model calls / 0 live tools |
-| Assertions / CLI | 完成 | 7 类断言（含 tool_order）；`test tests/agenttape` 批量执行全部已保存回归 |
+| Assertions / CLI | 完成 | 7 类断言（含 tool_order）；自包含 bundled CLI 可在无仓库依赖的安装缓存中执行全部已保存回归 |
 | Repository marketplace | 完成 | marketplace 名为 `agenttape`，插件源为 `./plugins/agenttape` |
 | Plugin validation | 完成 | 当前 Codex 插件校验器、单测和重新安装后的实机 MCP 调用通过 |
 | Open-source metadata | 完成 | MIT、README、SECURITY、CONTRIBUTING、Code of Conduct、Changelog |
-| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.4.1` Release 和公共 GitHub Actions 均已验证 |
+| Public GitHub release | 完成 | `jiangkoumo/agenttape`、`v0.4.2` Release 和公共 GitHub Actions 均已验证 |
 
 ## 关键验证证据
 
@@ -31,6 +31,8 @@ AgentTape 已完成本地“捕获 → 检查 → 分叉 → 注入 → 结构�
 - MCP 路径遍历、符号链接、超大文件、无效 schema、重复写入和覆盖请求均有拒绝测试。
 - 当前插件通过 `plugin-creator` 校验器；标准 `.mcp.json` 配置已在安装缓存中验证。
 - 插件发行测试和 bundle 构建通过；可选组件仍有独立全量测试与构建。
+- 在独立的 ToolFence 工程中，真实 Bash 命令以退出码 1 失败；AgentTape 捕获 5 个连续 Hook 事件、标记 1 个失败工具调用，并把 `permission_denied` 结构分支保存为 4 断言回归。
+- 从公开 `v0.4.2` 标签干净安装后，ToolFence 回归由安装缓存中的 bundled CLI 输出 `PASS 1/1 regression tapes`；ToolFence 业务源码未修改或推送。
 
 ## 当前架构
 
@@ -56,10 +58,10 @@ record-hook.mjs
 
 1. 公共仓库 `github.com/jiangkoumo/agenttape` 已创建并推送。
 2. GitHub Actions 的 `plugin-release` 和 `optional-surfaces` 检查均通过。
-3. 带注释的 `v0.4.1` 标签和 GitHub Release 已发布。
-4. 已从公共标签运行 `codex plugin marketplace add jiangkoumo/agenttape --ref v0.4.1` 并安装 `agenttape@agenttape`。
-5. GitHub 安装的插件已在新只读 Codex 进程中完成 `list_tapes` MCP 实机调用。
+3. 带注释的 `v0.4.2` 标签和 GitHub Release 已发布。
+4. 已从公共标签运行 `codex plugin marketplace add jiangkoumo/agenttape --ref v0.4.2` 并安装 `agenttape@agenttape`。
+5. GitHub 安装的插件已在 ToolFence 中通过 capture verifier 和离线回归 runner 实机调用。
 
-0.4.1 的完整验收证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)。下一阶段不再继续堆网站功能，而是选择 2–3 个真实 Codex 工程积累 regression fixture，并根据实际失败类型扩展断言和 replay 边界。
+0.4.1 的基础闭环证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)，ToolFence 跨项目和公开安装版证据见 [`V0_4_2_VALIDATION.md`](./V0_4_2_VALIDATION.md)。下一阶段继续选择真实 Codex 工程积累经过人工检查的 regression fixture，并根据实际失败类型扩展断言和 replay 边界。
 
 Branch Canvas 托管和远程 HTTP MCP 保留为可选后续方向，不计入上述完成条件。
