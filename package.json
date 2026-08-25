@@ -1,6 +1,6 @@
 {
   "name": "agenttape",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Local-first Codex plugin for redacted failure traces and offline regression tests.",
   "private": true,
   "license": "MIT",
@@ -31,8 +31,8 @@
     "test:demo": "npm run build:demo && node --test tests/demo-data.test.mjs",
     "test:replay": "node --test tests/structural-replay.test.mjs",
     "test:regression": "node --test tests/assertion-runner.test.mjs",
-    "test:tapes": "node plugins/agenttape/scripts/agenttape.mjs test tests/agenttape",
-    "verify:capture": "node plugins/agenttape/scripts/verify-capture.mjs",
+    "test:tapes": "node plugins/agenttape/dist/agenttape-cli.mjs test tests/agenttape",
+    "verify:capture": "node plugins/agenttape/dist/verify-capture.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "test:release": "node --test tests/release-metadata.test.mjs",
     "test:plugin-release": "npm run test:release && npm run test:plugin && npm run test:mcp && npm run test:replay && npm run test:regression && npm run test:tapes",

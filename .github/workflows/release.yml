@@ -20,9 +20,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:plugin-release
-      - run: git ls-files --error-unmatch plugins/agenttape/dist/mcp-server.mjs
+      - run: git ls-files --error-unmatch plugins/agenttape/dist/mcp-server.mjs plugins/agenttape/dist/agenttape-cli.mjs plugins/agenttape/dist/verify-capture.mjs
       - run: npm run build:plugin
-      - run: git diff --exit-code -- plugins/agenttape/dist/mcp-server.mjs
+      - run: git diff --exit-code -- plugins/agenttape/dist
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

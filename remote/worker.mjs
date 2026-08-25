@@ -61,7 +61,7 @@ export async function handleAgentTapeRemoteRequest(request, env = {}) {
   if (origin === false) return json({ error: "ORIGIN_NOT_ALLOWED" }, 403);
 
   if (url.pathname === "/health" && request.method === "GET") {
-    return json({ service: "agenttape-remote", version: "0.4.1", status: "ok", storage: "none" });
+    return json({ service: "agenttape-remote", version: "0.4.2", status: "ok", storage: "none" });
   }
   if (url.pathname === "/privacy" && request.method === "GET") {
     return html("AgentTape Remote Privacy", "<p>The service processes caller-supplied, explicitly redacted AgentTape documents in memory. It does not persist tape contents, read local files, call models, or call live tools. Infrastructure may retain ordinary request metadata for security and reliability.</p>");
