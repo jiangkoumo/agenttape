@@ -31,10 +31,10 @@ Intentional regression artifacts are written under `tests/agenttape/` and can be
 ## CLI
 
 ```bash
-node scripts/agenttape.mjs list --json
-node scripts/agenttape.mjs validate fixtures/permission-denied.tape
-node scripts/agenttape.mjs test tests/agenttape
-node scripts/verify-capture.mjs --must-fail --require-redaction --require-event PostToolUse
+node dist/agenttape-cli.mjs list --json
+node dist/agenttape-cli.mjs validate fixtures/permission-denied.tape
+node dist/agenttape-cli.mjs test tests/agenttape
+node dist/verify-capture.mjs --must-fail --require-redaction --require-event PostToolUse
 ```
 
 ## MCP behavior

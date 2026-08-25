@@ -8,13 +8,21 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const outputDirectory = path.join(projectRoot, "plugins", "agenttape", "dist");
 await mkdir(outputDirectory, { recursive: true });
 
-await build({
-  entryPoints: [path.join(projectRoot, "plugins", "agenttape", "mcp", "server.mjs")],
-  outfile: path.join(outputDirectory, "mcp-server.mjs"),
-  bundle: true,
-  platform: "node",
-  format: "esm",
-  target: "node20",
-});
+const bundles = [
+  ["mcp/server.mjs", "mcp-server.mjs"],
+  ["scripts/agenttape.mjs", "agenttape-cli.mjs"],
+  ["scripts/verify-capture.mjs", "verify-capture.mjs"],
+];
 
-console.log("Built plugins/agenttape/dist/mcp-server.mjs");
+for (const [entry, output] of bundles) {
+  await build({
+    entryPoints: [path.join(projectRoot, "plugins", "agenttape", entry)],
+    outfile: path.join(outputDirectory, output),
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    target: "node20",
+  });
+}
+
+console.log(`Built ${bundles.map(([, output]) => `plugins/agenttape/dist/${output}`).join(", ")}`);

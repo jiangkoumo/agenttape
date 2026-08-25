@@ -2,6 +2,12 @@
 
 All notable AgentTape changes are documented here.
 
+## 0.4.2 - 2026-08-25
+
+- Bundle the offline regression CLI and capture verifier so Git marketplace installs do not depend on the repository's `node_modules`.
+- Point the capture skill and documentation at the self-contained installed CLI.
+- Add a clean-install regression test that executes the bundled CLI outside the repository.
+
 ## 0.4.1 - 2026-08-25
 
 - Cover all 11 current Codex hook events, including prompts, compaction, and subagent lifecycle events.

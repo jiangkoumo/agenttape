@@ -61,7 +61,7 @@ AgentTape exposes four MCP tools:
 Run a saved regression locally or in CI:
 
 ```bash
-node plugins/agenttape/scripts/agenttape.mjs test tests/agenttape
+node plugins/agenttape/dist/agenttape-cli.mjs test tests/agenttape
 ```
 
 Passing assertions exit with code `0`. Validation or assertion failures exit nonzero, and captured comparison values are omitted from failure output.

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -14,6 +17,8 @@ test("publishes a Git-installable AgentTape marketplace", async () => {
   const packageMetadata = await readJson("package.json");
   const packageLock = await readJson("package-lock.json");
   const bundledServer = await readFile(new URL("plugins/agenttape/dist/mcp-server.mjs", root), "utf8");
+  const bundledCli = await readFile(new URL("plugins/agenttape/dist/agenttape-cli.mjs", root), "utf8");
+  const bundledVerifier = await readFile(new URL("plugins/agenttape/dist/verify-capture.mjs", root), "utf8");
   const readme = await readFile(new URL("README.md", root), "utf8");
 
   assert.equal(marketplace.name, "agenttape");
@@ -29,7 +34,43 @@ test("publishes a Git-installable AgentTape marketplace", async () => {
   assert.equal(packageLock.version, packageMetadata.version);
   assert.equal(packageLock.packages[""].version, packageMetadata.version);
   assert.match(bundledServer, /createAgentTapeServer/);
+  assert.match(bundledCli, /PASS.*regression tapes/);
+  assert.match(bundledVerifier, /obviousSecretPresent/);
   assert.match(readme, /codex plugin marketplace add jiangkoumo\/agenttape/);
   assert.match(readme, /codex plugin add agenttape@agenttape/);
   assert.doesNotMatch(readme, /agenttape@personal/);
+});
+
+test("bundled AgentTape tools run outside the repository without installed dependencies", async (t) => {
+  const installRoot = await mkdtemp(path.join(tmpdir(), "agenttape-install-"));
+  t.after(() => rm(installRoot, { recursive: true, force: true }));
+
+  const cliPath = path.join(installRoot, "agenttape-cli.mjs");
+  const verifierPath = path.join(installRoot, "verify-capture.mjs");
+  const fixtureDir = path.join(installRoot, "tests", "agenttape");
+  await mkdir(fixtureDir, { recursive: true });
+  await copyFile(new URL("plugins/agenttape/dist/agenttape-cli.mjs", root), cliPath);
+  await copyFile(new URL("plugins/agenttape/dist/verify-capture.mjs", root), verifierPath);
+  await copyFile(
+    new URL("tests/agenttape/fixture_permission_denied-timeout.tape", root),
+    path.join(fixtureDir, "fixture_permission_denied-timeout.tape"),
+  );
+
+  const result = spawnSync(process.execPath, [cliPath, "test", fixtureDir], {
+    cwd: installRoot,
+    encoding: "utf8",
+    env: { PATH: process.env.PATH },
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /PASS tape_regression_[A-Za-z0-9]+ 4\/4 assertions/);
+  assert.match(result.stdout, /PASS 1\/1 regression tapes/);
+
+  const verifier = spawnSync(process.execPath, [verifierPath, "--help"], {
+    cwd: installRoot,
+    encoding: "utf8",
+    env: { PATH: process.env.PATH },
+  });
+  assert.equal(verifier.status, 0, verifier.stderr || verifier.stdout);
+  assert.match(verifier.stdout, /verify-capture\.mjs \[--root <project>\]/);
 });

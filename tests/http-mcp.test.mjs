@@ -93,7 +93,7 @@ test("rejects unredacted, oversized, and cross-origin inputs without echoing val
 test("publishes health and policy endpoints without storage or challenge leakage", async () => {
   const health = await handleAgentTapeRemoteRequest(new Request("https://agenttape.test/health"), testEnv);
   assert.equal(health.status, 200);
-  assert.deepEqual(await health.json(), { service: "agenttape-remote", version: "0.4.1", status: "ok", storage: "none" });
+  assert.deepEqual(await health.json(), { service: "agenttape-remote", version: "0.4.2", status: "ok", storage: "none" });
 
   for (const path of ["/privacy", "/terms", "/support"]) {
     const response = await handleAgentTapeRemoteRequest(new Request(`https://agenttape.test${path}`), testEnv);
