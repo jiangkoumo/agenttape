@@ -19,6 +19,14 @@ test("publishes a Git-installable AgentTape marketplace", async () => {
   const bundledServer = await readFile(new URL("plugins/agenttape/dist/mcp-server.mjs", root), "utf8");
   const bundledCli = await readFile(new URL("plugins/agenttape/dist/agenttape-cli.mjs", root), "utf8");
   const bundledVerifier = await readFile(new URL("plugins/agenttape/dist/verify-capture.mjs", root), "utf8");
+  const localServer = await readFile(new URL("plugins/agenttape/mcp/server.mjs", root), "utf8");
+  const remoteServer = await readFile(new URL("plugins/agenttape/mcp/remote-server.mjs", root), "utf8");
+  const remoteWorker = await readFile(new URL("remote/worker.mjs", root), "utf8");
+  const changelog = await readFile(new URL("CHANGELOG.md", root), "utf8");
+  const reviewedRegression = await readFile(
+    new URL("tests/agenttape/real-agenttape-list-tapes-malformed-json.tape", root),
+    "utf8",
+  );
   const readme = await readFile(new URL("README.md", root), "utf8");
 
   assert.equal(marketplace.name, "agenttape");
@@ -33,6 +41,14 @@ test("publishes a Git-installable AgentTape marketplace", async () => {
   assert.equal(manifest.version, packageMetadata.version);
   assert.equal(packageLock.version, packageMetadata.version);
   assert.equal(packageLock.packages[""].version, packageMetadata.version);
+  assert.ok(localServer.includes(`version: "${packageMetadata.version}"`));
+  assert.ok(remoteServer.includes(`version: "${packageMetadata.version}"`));
+  assert.ok(remoteWorker.includes(`version: "${packageMetadata.version}"`));
+  assert.ok(changelog.includes(`## ${packageMetadata.version} -`));
+  assert.match(reviewedRegression, /"id": "tape_regression_/);
+  if (process.env.GITHUB_REF_TYPE === "tag") {
+    assert.equal(process.env.GITHUB_REF_NAME, `v${packageMetadata.version}`);
+  }
   assert.match(bundledServer, /createAgentTapeServer/);
   assert.match(bundledCli, /PASS.*regression tapes/);
   assert.match(bundledVerifier, /obviousSecretPresent/);

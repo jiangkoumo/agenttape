@@ -24,7 +24,7 @@ save assertions → run offline in CI
 
 - **Failure artifact, not another dashboard.** A `.tape` is portable evidence you can inspect, review, share, and commit with a bug fix.
 - **Codex-native capture.** Bundled hooks cover the 11 current Codex lifecycle, prompt, compaction, subagent, permission, and local tool events after the user reviews and trusts them—no application instrumentation required.
-- **Local and privacy-conscious.** Runtime captures stay inside the active project, and common secret-bearing fields are recursively redacted before export.
+- **Local and privacy-conscious.** Runtime captures stay inside the active project, common secret-bearing fields are recursively redacted, and committed regressions retain only event/tool structure rather than raw tool inputs or outputs.
 - **Controlled failure injection.** Fork recorded evidence with permission-denied, timeout, rate-limited, malformed-JSON, or truncated-response results.
 - **Offline regression tests.** Structural replay and assertions use captured evidence with zero model calls and zero live tool calls.
 - **Honest replay confidence.** AgentTape reports coverage and limitations instead of claiming every external system can be reproduced bit for bit.
@@ -70,7 +70,7 @@ The repository CI runs the same directory command through `npm run test:tapes`, 
 
 ## What a `.tape` captures
 
-Tape v1 keeps the evidence needed for structural debugging:
+Raw Tape v1 captures keep the evidence needed for structural debugging; `save_regression` then produces a stricter portable subset:
 
 - Run identity, timestamps, source coverage, and explicit limitations.
 - Ordered lifecycle, permission, and supported local tool events.
@@ -78,6 +78,8 @@ Tape v1 keeps the evidence needed for structural debugging:
 - A redaction manifest that records where values were removed.
 - Optional fork metadata, injected conditions, and structural assertions.
 - Replay-confidence inputs so consumers can distinguish strong evidence from playback-only traces.
+
+Saved regressions omit raw prompts, tool inputs/outputs, artifacts, local session/turn/use IDs, absolute paths, and nested tape inventory. Assertions that contain user-supplied expected values are rebuilt from the sanitized injected result or replaced with safe defaults.
 
 The tape schema is independent from the UI and recorder implementation. See [Tape Schema v1](./docs/TAPE_SCHEMA_V1.md).
 
@@ -131,6 +133,8 @@ codex plugin add agenttape@agenttape
 The committed `plugins/agenttape/dist/mcp-server.mjs` allows marketplace installs to run without building the repository. Rebuild and commit it whenever MCP source changes.
 
 Run `npm test` and `npm run build` when changing the optional Branch Canvas, Sites adapter, or remote HTTP MCP surfaces.
+
+Mutual AgentTape × ToolFence development follows the mirrored [alignment contract](./docs/AGENTTAPE_TOOLFENCE_ALIGNMENT.md). The five first-round real Codex scenarios are specified in the [AgentTape-side execution guide](./docs/TOOLFENCE_DOGFOODING.md).
 
 ## Uninstall
 

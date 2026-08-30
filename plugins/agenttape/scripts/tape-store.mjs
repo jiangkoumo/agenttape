@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 export const TAPE_VERSION = 1;
 
 const SECRET_KEY = /(?:authorization|cookie|credential|password|secret|token|api[-_]?key)/i;
-const FAILURE_STATUS = /^(?:denied|error|failed|failure|forbidden|cancelled)$/i;
+const FAILURE_STATUS = /^(?:denied|error|failed|failure|forbidden|cancelled|canceled|timeout|timed_out|timed-out)$/i;
 const MAX_STRING_LENGTH = 32_768;
 const MAX_ARRAY_LENGTH = 100;
 const MAX_DEPTH = 8;
@@ -59,13 +59,12 @@ export function redact(value, depth = 0) {
   );
 }
 
-function hasFailureSignal(value, depth = 0) {
-  if (depth > MAX_DEPTH || value == null) return false;
+function hasFailureSignal(value) {
+  if (value == null) return false;
   if (typeof value === "string") {
     return /\b(?:permission denied|access denied|not authorized|process exited with code [1-9]\d*|exit status [1-9]\d*)\b/i.test(value);
   }
-  if (Array.isArray(value)) return value.some((item) => hasFailureSignal(item, depth + 1));
-  if (typeof value !== "object") return false;
+  if (Array.isArray(value) || typeof value !== "object") return false;
 
   for (const [key, item] of Object.entries(value)) {
     if (/^(?:is_error|isError)$/i.test(key) && item === true) return true;
@@ -73,10 +72,62 @@ function hasFailureSignal(value, depth = 0) {
     if (/^(?:exit_code|exitCode)$/i.test(key) && item != null && Number.isFinite(Number(item)) && Number(item) !== 0) return true;
     if (/^(?:status_code|statusCode)$/i.test(key) && item != null && Number.isFinite(Number(item)) && Number(item) >= 400) return true;
     if (/^(?:status|state)$/i.test(key) && typeof item === "string" && FAILURE_STATUS.test(item)) return true;
-    if (hasFailureSignal(item, depth + 1)) return true;
   }
 
   return false;
+}
+
+function transcriptDiagnosticText(item) {
+  let text;
+  try {
+    text = JSON.stringify({
+      status: item.status,
+      errorCode: item.error_code ?? item.errorCode,
+      errorMessage: item.error_message ?? item.errorMessage,
+      message: item.message,
+      error: item.error,
+      result: item.result?.isError === true || item.result?.is_error === true ? item.result : undefined,
+    });
+  } catch {
+    return undefined;
+  }
+  return text;
+}
+
+function classifyTranscriptFailure(item) {
+  const status = typeof item.status === "string" ? item.status.trim().toLowerCase() : "";
+  if (/^(?:timeout|timed_out|timed-out)$/.test(status)) {
+    return {
+      kind: "timeout",
+      reason: "Codex recorded a tool timeout.",
+    };
+  }
+  if (/^(?:denied|forbidden)$/.test(status)) {
+    return {
+      kind: "permission_denied",
+      reason: "Codex recorded that policy denied the tool operation.",
+    };
+  }
+
+  const text = transcriptDiagnosticText(item);
+  if (/(?:\b(?:time[ -]?out|timed[ -]?out|deadline[ _-]?exceeded|ETIMEDOUT)\b|超时|超時)/i.test(text || "")) {
+    return {
+      kind: "timeout",
+      reason: "The recorded approval request timed out.",
+    };
+  }
+  if (/(?:\b(?:permission|access|authorization|policy|rule|tool(?:\s+call)?|operation)\s+(?:was |is )?denied\b|\b(?:toolfence|policy(?:\s+engine)?|sandbox)\s+denied\b|\bdenied\s+(?:by|due to)\s+(?:policy|rule)\b|\bdenied this tool call\b|\bnot authorized\b|\bforbidden\b|权限(?:不足|被拒绝)|策略拒绝|拒绝执行)/i.test(text || "")) {
+    return {
+      kind: "permission_denied",
+      reason: "Codex recorded that policy denied the tool operation.",
+    };
+  }
+  return undefined;
+}
+
+function hasTranscriptFailure(item, status, exitCode) {
+  if ((exitCode !== undefined && exitCode !== 0) || FAILURE_STATUS.test(status || "")) return true;
+  return item.result?.isError === true || item.result?.is_error === true;
 }
 
 function safeSegment(value, fallback) {
@@ -143,11 +194,9 @@ async function resolveTranscriptPath(payload) {
   return undefined;
 }
 
-async function transcriptToolEvidence(payload) {
-  if (payload.hook_event_name !== "PostToolUse" || !payload.tool_use_id) {
-    return undefined;
-  }
-  const transcriptPath = await resolveTranscriptPath(payload);
+async function transcriptToolEvidence(payload, toolUseId = payload.tool_use_id, resolvedTranscriptPath) {
+  if (!toolUseId) return undefined;
+  const transcriptPath = resolvedTranscriptPath || await resolveTranscriptPath(payload);
   if (!transcriptPath) return undefined;
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -170,13 +219,17 @@ async function transcriptToolEvidence(payload) {
           continue;
         }
         const item = row?.payload?.item;
-        if (item?.id !== payload.tool_use_id) continue;
+        if (item?.id !== toolUseId) continue;
         const exitCode = Number.isFinite(Number(item.exit_code)) ? Number(item.exit_code) : undefined;
         const status = typeof item.status === "string" ? item.status : undefined;
+        const failure = hasTranscriptFailure(item, status, exitCode)
+          ? classifyTranscriptFailure(item)
+          : undefined;
         return {
-          failed: (exitCode !== undefined && exitCode !== 0) || FAILURE_STATUS.test(status || ""),
+          failed: hasTranscriptFailure(item, status, exitCode),
           ...(status ? { status } : {}),
           ...(exitCode !== undefined ? { exitCode } : {}),
+          ...(failure ? { failure } : {}),
         };
       }
     } catch {
@@ -250,7 +303,7 @@ function eventFromPayload(payload, sequence, execution) {
     };
     if (type === "PostToolUse" && (hasFailureSignal(payload.tool_response) || execution?.failed)) {
       event.tool.failed = true;
-      event.tool.failure = {
+      event.tool.failure = execution?.failure || {
         kind: "tool_error",
         reason: execution?.exitCode !== undefined
           ? `Codex recorded tool exit code ${execution.exitCode}`
@@ -280,6 +333,99 @@ function currentTurn(events) {
     }
   }
   return events.slice(start);
+}
+
+function failureFromExecution(execution) {
+  if (execution.failure) return execution.failure;
+  if (execution.exitCode !== undefined) {
+    return {
+      kind: "tool_error",
+      reason: `Codex recorded tool exit code ${execution.exitCode} before PostToolUse`,
+    };
+  }
+  return {
+    kind: "tool_error",
+    reason: "Codex recorded a failed tool termination before PostToolUse.",
+  };
+}
+
+function normalizedFailureCode(kind) {
+  return {
+    permission_denied: "PERMISSION_DENIED",
+    timeout: "TIMEOUT",
+    rate_limited: "RATE_LIMITED",
+    malformed_json: "MALFORMED_JSON",
+    truncated_response: "TRUNCATED_RESPONSE",
+  }[kind] || "TOOL_ERROR";
+}
+
+function transcriptTerminationEvent(event, execution) {
+  const failure = failureFromExecution(execution);
+  const status = FAILURE_STATUS.test(execution.status || "")
+    ? execution.status.toLowerCase()
+    : "failed";
+  const terminationEvidence = {
+    source: "codex-transcript",
+    postToolUseObserved: false,
+    status,
+    ...(execution.exitCode !== undefined ? { exitCode: execution.exitCode } : {}),
+  };
+
+  return {
+    sequence: event.sequence + 1,
+    recordedAt: event.recordedAt,
+    type: "PostToolUse",
+    ...(event.turnId ? { turnId: event.turnId } : {}),
+    ...(event.permissionMode ? { permissionMode: event.permissionMode } : {}),
+    tool: {
+      name: event.tool.name,
+      ...(event.tool.useId ? { useId: event.tool.useId } : {}),
+      output: {
+        status,
+        ...(execution.exitCode !== undefined ? { exitCode: execution.exitCode } : {}),
+        error: {
+          code: normalizedFailureCode(failure.kind),
+          message: failure.reason,
+        },
+      },
+      failed: true,
+      failure,
+    },
+    details: { terminationEvidence },
+  };
+}
+
+async function reconcileUnmatchedToolFailures(payload, events) {
+  const completedUseIds = new Set(events
+    .filter((event) => event.type === "PostToolUse" && event.tool?.useId)
+    .map((event) => event.tool.useId));
+  const unmatched = events.filter((event) => (
+    event.type === "PreToolUse"
+    && event.tool?.useId
+    && !completedUseIds.has(event.tool.useId)
+  ));
+  if (!unmatched.length) return events;
+
+  const transcriptPath = await resolveTranscriptPath(payload);
+  if (!transcriptPath) return events;
+
+  const failures = new Map();
+  for (const event of unmatched) {
+    const execution = await transcriptToolEvidence(payload, event.tool.useId, transcriptPath);
+    if (execution?.failed) failures.set(event.tool.useId, execution);
+  }
+  if (!failures.size) return events;
+
+  const reconciled = [];
+  for (const event of events) {
+    reconciled.push(event);
+    const execution = failures.get(event.tool?.useId);
+    if (event.type === "PreToolUse" && execution) {
+      reconciled.push(transcriptTerminationEvent(event, execution));
+    }
+  }
+
+  return reconciled.map((event, index) => ({ ...event, sequence: index + 1 }));
 }
 
 function buildTape(payload, events) {
@@ -322,7 +468,7 @@ function buildTape(payload, events) {
 }
 
 async function finalize(payload, events) {
-  const turnEvents = currentTurn(events);
+  const turnEvents = await reconcileUnmatchedToolFailures(payload, currentTurn(events));
   const hasEvidence = turnEvents.some((event) => event.type !== "SessionEnd");
   if (!hasEvidence || (payload.hook_event_name === "Stop" && payload.stop_hook_active)) return null;
 
@@ -337,8 +483,10 @@ async function finalize(payload, events) {
 export async function recordHook(payload) {
   const file = runtimePath(payload);
   await mkdir(path.dirname(file), { recursive: true });
-  const execution = await transcriptToolEvidence(payload);
   return withRuntimeLock(file, async () => {
+    const execution = payload.hook_event_name === "PostToolUse"
+      ? await transcriptToolEvidence(payload)
+      : undefined;
     const events = await readEvents(file);
     const event = eventFromPayload(payload, events.length + 1, execution);
     await appendFile(file, `${JSON.stringify(event)}\n`, "utf8");

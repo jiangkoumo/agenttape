@@ -2,6 +2,14 @@
 
 All notable AgentTape changes are documented here.
 
+## 0.4.3 - 2026-08-30
+
+- Preserve one coherent tape when `Stop` races a transcript-backed `PostToolUse`, while retaining privacy-safe synthetic terminal evidence when a real result never arrives.
+- Keep `inspect_tape` and `fork_run` replay confidence consistent and conservatively low when tool results were not captured.
+- Make saved regressions portable by retaining only safe assertions and event structure, removing embedded absolute paths and raw tool payloads, and rebuilding an accurate redaction manifest.
+- Add the reviewed real AgentTape × ToolFence malformed-JSON regression and document the five-scenario joint-development contract.
+- Enforce release tag, package, plugin, runtime, changelog, tracked regression, main ancestry, and rebuilt bundle consistency before GitHub publication.
+
 ## 0.4.2 - 2026-08-25
 
 - Bundle the offline regression CLI and capture verifier so Git marketplace installs do not depend on the repository's `node_modules`.

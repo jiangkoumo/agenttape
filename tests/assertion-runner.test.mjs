@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -32,15 +32,21 @@ test("executes every fixed regression tape offline", async () => {
   }
 });
 
-test("executes every saved regression in a directory as one CI command", () => {
-  const result = spawnSync(process.execPath, [cli, "test", path.join(projectRoot, "tests", "agenttape")], {
+test("executes every saved regression in a directory as one CI command", async () => {
+  const regressionDirectory = path.join(projectRoot, "tests", "agenttape");
+  const regressionCount = (await readdir(regressionDirectory, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".tape"))
+    .length;
+  assert.ok(regressionCount > 0);
+
+  const result = spawnSync(process.execPath, [cli, "test", regressionDirectory], {
     cwd: projectRoot,
     encoding: "utf8",
     env: { PATH: process.env.PATH || "" },
   });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /PASS tape_regression_/);
-  assert.match(result.stdout, /PASS 1\/1 regression tapes/);
+  assert.match(result.stdout, new RegExp(`PASS ${regressionCount}/${regressionCount} regression tapes`));
 });
 
 test("returns a non-zero exit code and redacted diff for assertion failures", async () => {

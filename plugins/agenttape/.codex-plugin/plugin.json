@@ -1,6 +1,6 @@
 {
   "name": "agenttape",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Capture Codex tool traces and turn failures as portable .tape evidence.",
   "author": {
     "name": "jiangkoumo",

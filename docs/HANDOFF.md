@@ -1,7 +1,7 @@
 # AgentTape 项目交接
 
-更新时间：2026-08-25
-当前阶段：0.4.2 开源 Codex 插件已完成跨项目、公开安装和 CI 闭环验收
+更新时间：2026-08-30
+当前阶段：0.4.3 已收口五场景联合测试缺陷并完成 GitHub 发布
 
 ## 正式产品
 
@@ -39,7 +39,7 @@ git diff --check
 ## 已完成发布
 
 - 公共仓库：`https://github.com/jiangkoumo/agenttape`
-- 当前正式版：`v0.4.2`
+- 当前正式版：`v0.4.3`
 - 安装源：`codex plugin marketplace add jiangkoumo/agenttape`
 - 插件安装：`codex plugin add agenttape@agenttape`
 - 公共 CI、GitHub Release、隔离安装和真实 Codex MCP 调用均已通过。
@@ -48,8 +48,10 @@ git diff --check
 
 ## 后续方向
 
-1. 在 2–3 个真实 Codex 工程中积累经过人工检查的 regression fixture，优先覆盖权限、超时和外部 API 失败。
-2. 根据真实 fixture 扩展结构化 replay 断言，同时保持 tape v1 向后兼容。
-3. Branch Canvas、Sites 和远程 HTTP MCP 仅在有明确需求时继续，不作为本地插件安装依赖。
+1. 先遵循双仓库镜像的 [`AGENTTAPE_TOOLFENCE_ALIGNMENT.md`](./AGENTTAPE_TOOLFENCE_ALIGNMENT.md)，再使用 AgentTape 侧 [`TOOLFENCE_DOGFOODING.md`](./TOOLFENCE_DOGFOODING.md)。五个真实 Codex 场景已经全部通过；复盘加固进一步完成了带 provenance 的合成终止边界、fork 前 replay confidence、递归 regression 隐私最小化，以及 ToolFence 审批/转发审计与 AgentTape 动作归一化。
+2. 场景 5 的真实回归为 `tests/agenttape/real-agenttape-list-tapes-malformed-json.tape`：来自场景 4 capture，原运行经 Broker `allow-once` 批准；加固后由官方保存实现重生成成不含原始 tool input/output 的事件骨架，5 条安全断言通过、confidence 为 `0.40 / low`，发布目录级 bundled CLI 为 2/2。fixture 派生回归仍不能代替真实轮次。
+3. 只有人工复核、脱敏且 bundled CLI 通过的 `.tape` 才能进入 `tests/agenttape/`；raw capture、audit、Broker 数据和本地 MCP 配置不得提交。
+4. 后续只根据新的真实失败扩展结构化 replay 断言，同时保持 tape v1 向后兼容；历史缺失 Hook 的 capture 不做静默改写。
+5. Branch Canvas、Sites 和远程 HTTP MCP 仅在有明确需求时继续，不作为本地插件安装依赖。
 
 0.4.1 的实际 Bash 退出 7、脱敏、MCP 分叉保存和离线 CI 证据见 [`V0_4_1_VALIDATION.md`](./V0_4_1_VALIDATION.md)。ToolFence 跨项目使用、安装态 CLI 修复和公开 `v0.4.2` 验证见 [`V0_4_2_VALIDATION.md`](./V0_4_2_VALIDATION.md)。

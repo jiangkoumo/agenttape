@@ -1,7 +1,7 @@
 import { lstat, readFile, readdir, realpath } from "node:fs/promises";
 import path from "node:path";
 
-import { parseTape } from "../scripts/tape-schema.mjs";
+import { calculateReplayConfidence, parseTape } from "../scripts/tape-schema.mjs";
 
 export const MAX_TAPE_BYTES = 1_048_576;
 export const MAX_LIST_RESULTS = 100;
@@ -27,9 +27,38 @@ function containsRedaction(value, depth = 0) {
   return Object.values(value).some((item) => containsRedaction(item, depth + 1));
 }
 
+function recordedToolResultsComplete(tape) {
+  const started = tape.events.filter((event) => event.type === "PreToolUse" && event.tool);
+  const completed = tape.events.filter((event) => event.type === "PostToolUse" && event.tool);
+  const completedUseIds = new Set(completed
+    .map((event) => event.tool.useId)
+    .filter(Boolean));
+
+  return completed.every((event) => (
+    Object.hasOwn(event.tool, "output")
+    && event.details?.terminationEvidence?.postToolUseObserved !== false
+  ))
+    && started.every((event) => event.tool.useId && completedUseIds.has(event.tool.useId));
+}
+
 function replayConfidence(tape) {
   const confidence = tape.replay?.confidence;
-  return confidence ? { score: confidence.score, level: confidence.level } : null;
+  if (confidence) return confidence;
+
+  return calculateReplayConfidence({
+    coverage: tape.source.coverage,
+    capturedToolResults: recordedToolResultsComplete(tape),
+    eventSequenceComplete: tape.events.every((event, index) => event.sequence === index + 1),
+    externalStateCaptured: false,
+    redactionsPresent: tape.redactions?.applied === true || containsRedaction(tape),
+    unknownToolCount: 0,
+    modelCallsBeforeFork: 0,
+  });
+}
+
+function replayConfidenceSummary(tape) {
+  const confidence = replayConfidence(tape);
+  return { score: confidence.score, level: confidence.level };
 }
 
 function firstFailure(tape) {
@@ -53,7 +82,7 @@ export function summarizeTape(tape) {
     toolCallCount: tape.summary.toolCallCount,
     failedToolCallCount: tape.summary.failedToolCallCount,
     ...(firstFailure(tape) ? { firstFailure: firstFailure(tape) } : {}),
-    replayConfidence: replayConfidence(tape),
+    replayConfidence: replayConfidenceSummary(tape),
     redactionApplied: tape.redactions?.applied === true || containsRedaction(tape),
   };
 }
@@ -156,7 +185,7 @@ export function inspectTape(tape) {
     },
     events: tape.events,
     failures,
-    replayConfidence: tape.replay?.confidence || null,
+    replayConfidence: replayConfidence(tape),
     redaction: tape.redactions || {
       applied: containsRedaction(tape),
       count: 0,

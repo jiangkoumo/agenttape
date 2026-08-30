@@ -12,9 +12,11 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import {
   AgentTapeAccessError,
   MAX_TAPE_BYTES,
+  inspectTape as inspectRecordedTape,
   inspectWorkspaceTape,
   listWorkspaceTapes,
 } from "../plugins/agenttape/mcp/tape-access.mjs";
+import { forkWorkspaceRun, saveWorkspaceRegression } from "../plugins/agenttape/mcp/write-tools.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pluginRoot = path.join(projectRoot, "plugins", "agenttape");
@@ -49,6 +51,67 @@ test("lists and inspects only valid tapes in the active workspace", async () => 
   }
 });
 
+test("derives replay confidence for raw captures before a fork is requested", async () => {
+  const rawCapture = JSON.parse(await readFile(path.join(fixtureRoot, "permission-denied.tape"), "utf8"));
+  delete rawCapture.replay;
+
+  const inspected = inspectRecordedTape(rawCapture);
+  assert.equal(inspected.replayConfidence.score, 0.65);
+  assert.equal(inspected.replayConfidence.level, "medium");
+  assert.equal(inspected.replayConfidence.inputs.coverage, "supported-local-hooks");
+  assert.equal(inspected.replayConfidence.inputs.capturedToolResults, true);
+  assert.match(inspected.replayConfidence.reasons.join(" "), /External state was not captured/);
+});
+
+test("keeps inspect and fork confidence aligned for tool-less and synthetic PostToolUse events", async () => {
+  const workspace = await fixtureWorkspace(["permission-denied.tape"]);
+  const sourceTapePath = path.join(workspace, ".agent-tape", "tapes", "permission-denied.tape");
+  const sourceTape = JSON.parse(await readFile(sourceTapePath, "utf8"));
+  delete sourceTape.replay;
+  sourceTape.events.splice(3, 0, {
+    sequence: 4,
+    recordedAt: "2026-08-21T08:00:02.500Z",
+    type: "PostToolUse",
+  });
+  sourceTape.events[4].sequence = 5;
+  sourceTape.summary.eventCount = 5;
+  await writeFile(sourceTapePath, JSON.stringify(sourceTape));
+
+  try {
+    const inspected = await inspectWorkspaceTape(workspace, sourceTape.id);
+    const forked = await forkWorkspaceRun(workspace, {
+      id: sourceTape.id,
+      boundarySequence: 2,
+      targetSequence: 3,
+      injection: "timeout",
+    });
+    assert.equal(forked.status, "completed");
+    assert.deepEqual(forked.confidence, inspected.replayConfidence);
+    assert.equal(inspected.replayConfidence.inputs.capturedToolResults, true);
+    assert.equal(inspected.replayConfidence.score, 0.65);
+    assert.equal(inspected.replayConfidence.level, "medium");
+
+    sourceTape.events[2].details = {
+      terminationEvidence: { postToolUseObserved: false },
+    };
+    await writeFile(sourceTapePath, JSON.stringify(sourceTape));
+
+    const terminalInspected = await inspectWorkspaceTape(workspace, sourceTape.id);
+    const terminalForked = await forkWorkspaceRun(workspace, {
+      id: sourceTape.id,
+      boundarySequence: 2,
+      targetSequence: 3,
+      injection: "timeout",
+    });
+    assert.deepEqual(terminalForked.confidence, terminalInspected.replayConfidence);
+    assert.equal(terminalInspected.replayConfidence.inputs.capturedToolResults, false);
+    assert.equal(terminalInspected.replayConfidence.score, 0.4);
+    assert.equal(terminalInspected.replayConfidence.level, "low");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test("rejects directory escape and reports symlink, oversized, and invalid tape files", async () => {
   const outside = await fixtureWorkspace(["permission-denied.tape"]);
   const escaped = await mkdtemp(path.join(os.tmpdir(), "agenttape-escaped-"));
@@ -76,8 +139,247 @@ test("rejects directory escape and reports symlink, oversized, and invalid tape 
   }
 });
 
+test("save_regression removes recorded payloads and custom assertion values", async () => {
+  const workspace = await fixtureWorkspace(["permission-denied.tape"]);
+  const sourceTapePath = path.join(workspace, ".agent-tape", "tapes", "permission-denied.tape");
+  const sourceTape = JSON.parse(await readFile(sourceTapePath, "utf8"));
+  const privatePrompt = "private nested inspect prompt";
+  const privateSessionId = "private nested session id";
+  const privateTurnId = "private nested turn id";
+  const privateUseId = "private nested use id";
+  const privateArtifact = "private nested artifact content";
+  const privateExternalOutput = "private non-agent tool output";
+  const privateExpected = "private assertion expected value";
+  const privateAbsolutePath = "/opt/private/absolute-path";
+  const privateUncPath = "\\\\private-host\\private-share\\secret";
+  const inventoryTapeId = "tape_unrelated_inventory";
+
+  sourceTape.id = "tape_private_inventory_source";
+  sourceTape.source = {
+    ...sourceTape.source,
+    adapter: `codex-hooks:${privateAbsolutePath}`,
+    sessionId: privateSessionId,
+    turnId: privateTurnId,
+    cwd: workspace,
+  };
+  sourceTape.events = [
+    {
+      sequence: 1,
+      recordedAt: "2026-08-21T08:00:00.000Z",
+      type: "SessionStart",
+      turnId: privateTurnId,
+      details: { prompt: privatePrompt },
+    },
+    {
+      sequence: 2,
+      recordedAt: "2026-08-21T08:00:01.000Z",
+      type: "UserPromptSubmit",
+      turnId: privateTurnId,
+      details: { prompt: privatePrompt, sessionId: privateSessionId },
+    },
+    {
+      sequence: 3,
+      recordedAt: "2026-08-21T08:00:02.000Z",
+      type: "PreToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: `github.create_issue:${privateAbsolutePath}`,
+        useId: privateUseId,
+        input: { repository: workspace, prompt: privatePrompt },
+      },
+    },
+    {
+      sequence: 4,
+      recordedAt: "2026-08-21T08:00:03.000Z",
+      type: "PostToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: `github.create_issue:${privateAbsolutePath}`,
+        useId: privateUseId,
+        output: {
+          result: privateExternalOutput,
+          artifact: { content: privateArtifact, path: path.join(workspace, "external-artifact.txt") },
+        },
+      },
+    },
+    {
+      sequence: 5,
+      recordedAt: "2026-08-21T08:00:04.000Z",
+      type: "PreToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: "mcp__agenttape_fenced__inspect_tape",
+        useId: privateUseId,
+        input: { workspaceRoot: workspace, prompt: privatePrompt },
+      },
+    },
+    {
+      sequence: 6,
+      recordedAt: "2026-08-21T08:00:05.000Z",
+      type: "PostToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: "mcp__agenttape_fenced__inspect_tape",
+        useId: privateUseId,
+        output: {
+          structuredContent: {
+            run: { source: { sessionId: privateSessionId, turnId: privateTurnId, cwd: workspace } },
+            events: [{
+              turnId: privateTurnId,
+              details: { prompt: privatePrompt },
+              tool: {
+                useId: privateUseId,
+                input: { cwd: workspace },
+                output: { artifact: { content: privateArtifact, path: path.join(workspace, "artifact.txt") } },
+              },
+            }],
+          },
+        },
+      },
+    },
+    {
+      sequence: 7,
+      recordedAt: "2026-08-21T08:00:06.000Z",
+      type: "PreToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: "mcp__agenttape_fenced__list_tapes:" + privateUncPath,
+        useId: privateUseId,
+        input: { workspaceRoot: workspace },
+      },
+    },
+    {
+      sequence: 8,
+      recordedAt: "2026-08-21T08:00:07.000Z",
+      type: "PostToolUse",
+      turnId: privateTurnId,
+      tool: {
+        name: "mcp__agenttape_fenced__list_tapes:" + privateUncPath,
+        useId: privateUseId,
+        output: {
+          structuredContent: {
+            tapes: [{ id: inventoryTapeId, source: { sessionId: privateSessionId }, artifacts: [{ content: privateArtifact }] }],
+            warnings: [{ file: path.join(workspace, "other.tape"), prompt: privatePrompt }],
+          },
+        },
+      },
+    },
+  ];
+  sourceTape.summary = { eventCount: 8, toolCallCount: 3, failedToolCallCount: 0 };
+  sourceTape.artifacts = [{
+    id: "private-artifact",
+    kind: "tool_output",
+    mediaType: "application/json",
+    sha256: "0".repeat(64),
+    path: path.join(workspace, "private-artifact.json"),
+    redacted: false,
+  }];
+  delete sourceTape.fork;
+  delete sourceTape.injection;
+  delete sourceTape.assertions;
+  delete sourceTape.replay;
+  await writeFile(sourceTapePath, `${JSON.stringify(sourceTape, null, 2)}\n`, "utf8");
+
+  try {
+    const saved = await saveWorkspaceRegression(workspace, {
+      id: sourceTape.id,
+      boundarySequence: 6,
+      targetSequence: 8,
+      injection: "timeout",
+      filename: "nested-private-data.tape",
+      assertions: [{
+        kind: "field_equals",
+        path: "/diff/after/errorCode",
+        expected: {
+          prompt: privatePrompt,
+          sessionId: privateSessionId,
+          turnId: privateTurnId,
+          useId: privateUseId,
+          artifact: { content: privateArtifact, path: workspace },
+          expected: privateExpected,
+        },
+      }, {
+        kind: "tool_absent",
+        toolName: "mcp__unseen__execute:" + privateUncPath,
+      }],
+    });
+    const regression = path.join(workspace, saved.path);
+    const regressionText = await readFile(regression, "utf8");
+    const regressionTape = JSON.parse(regressionText);
+
+    for (const value of [
+      privatePrompt,
+      privateSessionId,
+      privateTurnId,
+      privateUseId,
+      privateArtifact,
+      privateExternalOutput,
+      privateExpected,
+      privateAbsolutePath,
+      privateUncPath,
+      inventoryTapeId,
+      sourceTape.id,
+      workspace,
+    ]) {
+      assert.ok(!regressionText.includes(value), `saved regression leaked ${value}`);
+    }
+    assert.doesNotMatch(regressionText, /private-host|private-share/);
+    assert.equal("artifacts" in regressionTape, false);
+    for (const event of regressionTape.events) {
+      assert.equal("turnId" in event, false);
+      assert.equal("details" in event, false);
+      assert.equal("input" in (event.tool || {}), false);
+      assert.equal("output" in (event.tool || {}), false);
+      assert.equal("useId" in (event.tool || {}), false);
+    }
+    assert.deepEqual(regressionTape.assertions, [{
+      kind: "field_equals",
+      path: "/diff/after/errorCode",
+      expected: "TIMEOUT",
+    }, {
+      kind: "tool_absent",
+      toolName: "mcp__unseen__execute:[ABSOLUTE_PATH]",
+    }]);
+    assert.deepEqual(regressionTape.redactions, {
+      applied: true,
+      count: 7,
+      strategy: "agenttape-v1",
+      paths: [
+        "/assertions/1/toolName",
+        "/events/2/tool/name",
+        "/events/3/tool/name",
+        "/events/6/tool/name",
+        "/events/7/tool/name",
+        "/source/cwd",
+        "/source/sessionId",
+      ],
+    });
+
+    const testResult = spawnSync(process.execPath, [
+      path.join(pluginRoot, "scripts", "agenttape.mjs"),
+      "test",
+      regression,
+    ], { cwd: workspace, encoding: "utf8", env: { PATH: process.env.PATH || "" } });
+    assert.equal(testResult.status, 0, testResult.stderr);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test("serves list_tapes and inspect_tape over the bundled stdio MCP server", async () => {
   const workspace = await fixtureWorkspace(["permission-denied.tape"]);
+  const sourceTapePath = path.join(workspace, ".agent-tape", "tapes", "permission-denied.tape");
+  const sourceTape = JSON.parse(await readFile(sourceTapePath, "utf8"));
+  sourceTape.source.cwd = workspace;
+  sourceTape.events[0] = {
+    ...sourceTape.events[0],
+    type: "UserPromptSubmit",
+    turnId: "private-turn-id",
+    details: { prompt: `private regression prompt from ${workspace}` },
+  };
+  sourceTape.events[1].tool.useId = "private-tool-use-id";
+  sourceTape.events[1].tool.input.repository = path.join(workspace, "private", "project");
+  await writeFile(sourceTapePath, `${JSON.stringify(sourceTape, null, 2)}\n`, "utf8");
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [bundledServer],
@@ -141,6 +443,14 @@ test("serves list_tapes and inspect_tape over the bundled stdio MCP server", asy
     assert.equal(saved.isError, undefined);
     assert.equal(saved.structuredContent.path, "tests/agenttape/permission-timeout.tape");
     const regression = path.join(workspace, saved.structuredContent.path);
+    const regressionText = await readFile(regression, "utf8");
+    const regressionTape = JSON.parse(regressionText);
+    assert.doesNotMatch(regressionText, /private regression prompt|private-turn-id|private-tool-use-id/);
+    assert.ok(!regressionText.includes(workspace));
+    assert.equal(regressionTape.source.cwd, ".");
+    assert.equal(regressionTape.source.sessionId, "regression-source");
+    assert.equal(regressionTape.events.length, 3);
+    assert.equal("details" in regressionTape.events[0], false);
     const testResult = spawnSync(process.execPath, [
       path.join(pluginRoot, "scripts", "agenttape.mjs"),
       "test",

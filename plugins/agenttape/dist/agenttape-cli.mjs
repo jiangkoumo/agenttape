@@ -7531,10 +7531,12 @@ function hasRedaction(value, depth = 0) {
   return Object.values(value).some((item) => hasRedaction(item, depth + 1));
 }
 function confidenceInputs(tape) {
-  const toolResults = tape.events.filter((event) => event.type === "PostToolUse");
+  const started = tape.events.filter((event) => event.type === "PreToolUse" && event.tool);
+  const toolResults = tape.events.filter((event) => event.type === "PostToolUse" && event.tool);
+  const completedUseIds = new Set(toolResults.map((event) => event.tool?.useId).filter(Boolean));
   return {
     coverage: tape.source.coverage,
-    capturedToolResults: toolResults.every((event) => Object.hasOwn(event.tool || {}, "output")),
+    capturedToolResults: toolResults.every((event) => Object.hasOwn(event.tool || {}, "output") && event.details?.terminationEvidence?.postToolUseObserved !== false) && started.every((event) => event.tool.useId && completedUseIds.has(event.tool.useId)),
     eventSequenceComplete: tape.events.every((event, index) => event.sequence === index + 1),
     externalStateCaptured: false,
     redactionsPresent: tape.redactions?.applied === true || hasRedaction(tape),
